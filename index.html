@@ -421,6 +421,339 @@
       color: #475569;
     }
 
+    .operation-timeline {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.99), rgba(241, 245, 249, 0.95));
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      border-radius: 18px;
+      padding: 14px;
+      margin-bottom: 14px;
+      box-shadow:
+        0 14px 30px rgba(15, 23, 42, 0.10),
+        0 2px 8px rgba(15, 23, 42, 0.05);
+    }
+
+    .timeline-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .timeline-head h2 {
+      margin: 0;
+      font-size: 19px;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+    }
+
+    .timeline-head p {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: #475569;
+      max-width: 740px;
+    }
+
+    .timeline-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .timeline-controls label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      font-weight: 700;
+      color: #64748b;
+      min-width: 170px;
+    }
+
+    .timeline-controls select {
+      border: 1px solid #d1dbe8;
+      border-radius: 8px;
+      background: #fff;
+      color: #0f172a;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 8px 9px;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05);
+    }
+
+    .timeline-controls select:focus {
+      outline: none;
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.28);
+    }
+
+    .timeline-overview {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(160px, 1fr));
+      gap: 10px;
+      margin-bottom: 11px;
+    }
+
+    .timeline-chip {
+      background: #fff;
+      border: 1px solid #dbe5f1;
+      border-radius: 12px;
+      padding: 9px 10px;
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.06);
+      min-height: 72px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 3px;
+    }
+
+    .timeline-chip .chip-label {
+      color: #64748b;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 800;
+    }
+
+    .timeline-chip .chip-value {
+      color: #0f172a;
+      font-size: 20px;
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+    }
+
+    .timeline-chip .chip-sub {
+      color: #334155;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .timeline-stage {
+      background: #fff;
+      border: 1px solid #dbe5f1;
+      border-radius: 12px;
+      padding: 10px 10px 8px;
+    }
+
+    .timeline-stage-title {
+      margin: 0 0 8px;
+      font-size: 11px;
+      color: #475569;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .07em;
+    }
+
+    .timeline-track {
+      position: relative;
+      height: 26px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      border: 1px solid #cbd5e1;
+      overflow: hidden;
+      box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.14);
+      margin-bottom: 7px;
+    }
+
+    .timeline-segment {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+    }
+
+    .timeline-segment.past {
+      left: 0;
+      width: 0%;
+      background: linear-gradient(90deg, #0f172a, #1d4ed8, #3b82f6);
+      transition: width 0.35s ease;
+    }
+
+    .timeline-segment.future {
+      right: 0;
+      width: 0%;
+      background: repeating-linear-gradient(
+        -45deg,
+        rgba(100, 116, 139, 0.48) 0px,
+        rgba(100, 116, 139, 0.48) 8px,
+        rgba(148, 163, 184, 0.36) 8px,
+        rgba(148, 163, 184, 0.36) 16px
+      );
+      transition: width 0.35s ease;
+    }
+
+    .timeline-now-marker,
+    .timeline-completion-marker {
+      position: absolute;
+      top: -3px;
+      bottom: -3px;
+      width: 3px;
+      border-radius: 999px;
+      pointer-events: none;
+    }
+
+    .timeline-now-marker {
+      left: 0%;
+      background: #0f172a;
+      box-shadow:
+        0 0 0 2px rgba(255, 255, 255, 0.95),
+        0 0 0 4px rgba(30, 41, 59, 0.20);
+      transition: left 0.35s ease;
+    }
+
+    .timeline-completion-marker {
+      display: none;
+      left: 0%;
+      background: #16a34a;
+      box-shadow:
+        0 0 0 2px rgba(255, 255, 255, 0.95),
+        0 0 0 4px rgba(22, 163, 74, 0.25);
+      transition: left 0.35s ease;
+    }
+
+    .timeline-track-labels {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      color: #334155;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 8px;
+    }
+
+    .timeline-progress {
+      position: relative;
+      height: 18px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      border: 1px solid #cbd5e1;
+      overflow: hidden;
+      box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.12);
+      margin-bottom: 8px;
+    }
+
+    .timeline-progress-real {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 0%;
+      background: linear-gradient(90deg, #1d4ed8, #3b82f6);
+      transition: width 0.35s ease;
+    }
+
+    .timeline-progress-proj {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0%;
+      width: 0%;
+      background: repeating-linear-gradient(
+        -45deg,
+        rgba(22, 163, 74, 0.70) 0px,
+        rgba(22, 163, 74, 0.70) 8px,
+        rgba(34, 197, 94, 0.42) 8px,
+        rgba(34, 197, 94, 0.42) 16px
+      );
+      transition: left 0.35s ease, width 0.35s ease;
+    }
+
+    .timeline-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      font-size: 11px;
+      color: #475569;
+      font-weight: 700;
+    }
+
+    .timeline-legend i {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    .timeline-legend .dot-past { background: #2563eb; }
+    .timeline-legend .dot-now { background: #0f172a; }
+    .timeline-legend .dot-future {
+      background: repeating-linear-gradient(
+        -45deg,
+        #64748b 0px,
+        #64748b 5px,
+        #94a3b8 5px,
+        #94a3b8 10px
+      );
+    }
+    .timeline-legend .dot-proj {
+      background: repeating-linear-gradient(
+        -45deg,
+        #16a34a 0px,
+        #16a34a 5px,
+        #4ade80 5px,
+        #4ade80 10px
+      );
+    }
+
+    .timeline-history {
+      margin-top: 8px;
+      border: 1px solid #dbe5f1;
+      border-radius: 10px;
+      background: #fff;
+      padding: 6px 8px;
+    }
+
+    .timeline-history-head {
+      font-size: 10px;
+      color: #64748b;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-bottom: 5px;
+    }
+
+    .timeline-history svg {
+      display: block;
+      width: 100%;
+      height: 58px;
+    }
+
+    .timeline-history .axis {
+      stroke: #cbd5e1;
+      stroke-width: 1;
+    }
+
+    .timeline-history .real-line {
+      fill: none;
+      stroke: #2563eb;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .timeline-history .proj-line {
+      fill: none;
+      stroke: #16a34a;
+      stroke-width: 2;
+      stroke-dasharray: 6 4;
+      stroke-linecap: round;
+    }
+
+    .timeline-history .now-point {
+      fill: #0f172a;
+      stroke: #fff;
+      stroke-width: 2;
+    }
+
     .stats {
       display: grid;
       grid-template-columns: repeat(4, minmax(230px, 1fr));
@@ -1859,6 +2192,9 @@
       .sim-panel {
         grid-template-columns: repeat(2, minmax(180px, 1fr));
       }
+      .timeline-overview {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
       .stats {
         grid-template-columns: repeat(2, minmax(220px, 1fr));
       }
@@ -1890,6 +2226,25 @@
       .stats,
       .summary-row {
         grid-template-columns: 1fr;
+      }
+      .timeline-controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .timeline-controls label {
+        min-width: 0;
+      }
+      .timeline-overview {
+        grid-template-columns: 1fr;
+      }
+      .timeline-chip .chip-value {
+        font-size: 18px;
+      }
+      .timeline-track-labels {
+        font-size: 10px;
+      }
+      .timeline-legend {
+        gap: 6px 10px;
       }
       .stat-card {
         padding: 12px;
@@ -2154,6 +2509,94 @@
       </div>
     </section>
 
+    <section class="operation-timeline">
+      <div class="timeline-head">
+        <div>
+          <h2>Linha do Tempo da Operacao</h2>
+          <p>Leitura unica de passado (real), presente (agora) e futuro (projecao pela media atual).</p>
+        </div>
+      </div>
+
+      <div class="timeline-controls">
+        <label>
+          Janela de Futuro
+          <select id="timelineHorizonSelect" aria-label="Janela de futuro da linha do tempo">
+            <option value="120">Proximas 2 horas</option>
+            <option value="240">Proximas 4 horas</option>
+            <option value="480">Proximas 8 horas</option>
+            <option value="shift-end">Ate fim da jornada</option>
+          </select>
+        </label>
+        <label>
+          Base da Projecao
+          <select id="timelineRateModeSelect" aria-label="Base de calculo da projecao">
+            <option value="avg">Media acumulada</option>
+            <option value="last-hour">Ultima hora util</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="timeline-overview">
+        <article class="timeline-chip">
+          <span class="chip-label">Passado</span>
+          <span class="chip-value" id="timelinePastValue">0 linhas</span>
+          <span class="chip-sub" id="timelinePastSub">0,0% concluido</span>
+        </article>
+        <article class="timeline-chip">
+          <span class="chip-label">Presente</span>
+          <span class="chip-value" id="timelineNowValue">D1 05:00</span>
+          <span class="chip-sub" id="timelineNowSub">Ritmo 0 l/h</span>
+        </article>
+        <article class="timeline-chip">
+          <span class="chip-label">Futuro</span>
+          <span class="chip-value" id="timelineFutureValue">+0 linhas</span>
+          <span class="chip-sub" id="timelineFutureSub">0,0% projetado</span>
+        </article>
+        <article class="timeline-chip">
+          <span class="chip-label">ETA Conclusao</span>
+          <span class="chip-value" id="timelineEtaValue">Sem previsao</span>
+          <span class="chip-sub" id="timelineEtaSub">Necessita ritmo maior</span>
+        </article>
+      </div>
+
+      <div class="timeline-stage">
+        <p class="timeline-stage-title">Fluxo do tempo</p>
+        <div class="timeline-track">
+          <span class="timeline-segment past" id="timelinePastSegment"></span>
+          <span class="timeline-segment future" id="timelineFutureSegment"></span>
+          <span class="timeline-now-marker" id="timelineNowMarker"></span>
+          <span class="timeline-completion-marker" id="timelineCompletionMarker"></span>
+        </div>
+        <div class="timeline-track-labels">
+          <span id="timelineStartLabel">Inicio: 05:00</span>
+          <span id="timelineCurrentLabel">Agora: 05:00</span>
+          <span id="timelineEndLabel">Fim: 09:00</span>
+        </div>
+
+        <p class="timeline-stage-title">Progresso de producao</p>
+        <div class="timeline-progress">
+          <span class="timeline-progress-real" id="timelineRealProgress"></span>
+          <span class="timeline-progress-proj" id="timelineProjectedProgress"></span>
+        </div>
+        <div class="timeline-legend">
+          <span><i class="dot-past"></i>Passado realizado</span>
+          <span><i class="dot-now"></i>Momento atual</span>
+          <span><i class="dot-future"></i>Janela futura</span>
+          <span><i class="dot-proj"></i>Projecao mantendo media</span>
+        </div>
+
+        <div class="timeline-history">
+          <div class="timeline-history-head">Historico e tendencia</div>
+          <svg id="timelineHistorySvg" viewBox="0 0 100 40" preserveAspectRatio="none" aria-label="Historico de producao">
+            <line class="axis" x1="0" y1="39" x2="100" y2="39"></line>
+            <polyline class="real-line" id="timelineRealLine" points=""></polyline>
+            <polyline class="proj-line" id="timelineProjLine" points=""></polyline>
+            <circle class="now-point" id="timelineNowPoint" cx="0" cy="39" r="1.8"></circle>
+          </svg>
+        </div>
+      </div>
+    </section>
+
     <section class="stats">
       <article class="stat-card" data-detail="setores">
         <div class="stat-icon stat-icon-primary">
@@ -2391,6 +2834,9 @@
         simulatedMinutes: SIM_START_MINUTES,
         secondsPerProdHour: 60,
         chartFilter: "todos",
+        timelineHorizon: "120",
+        timelineRateMode: "avg",
+        productionHistory: [],
         config: {
           workStartMin: 5 * 60,
           workEndMin: 14 * 60,
@@ -2421,6 +2867,28 @@
         simClock: document.getElementById("simClock"),
         speedLabel: document.getElementById("speedLabel"),
         hourRef: document.getElementById("hourRef"),
+        timelineHorizonSelect: document.getElementById("timelineHorizonSelect"),
+        timelineRateModeSelect: document.getElementById("timelineRateModeSelect"),
+        timelinePastValue: document.getElementById("timelinePastValue"),
+        timelinePastSub: document.getElementById("timelinePastSub"),
+        timelineNowValue: document.getElementById("timelineNowValue"),
+        timelineNowSub: document.getElementById("timelineNowSub"),
+        timelineFutureValue: document.getElementById("timelineFutureValue"),
+        timelineFutureSub: document.getElementById("timelineFutureSub"),
+        timelineEtaValue: document.getElementById("timelineEtaValue"),
+        timelineEtaSub: document.getElementById("timelineEtaSub"),
+        timelinePastSegment: document.getElementById("timelinePastSegment"),
+        timelineFutureSegment: document.getElementById("timelineFutureSegment"),
+        timelineNowMarker: document.getElementById("timelineNowMarker"),
+        timelineCompletionMarker: document.getElementById("timelineCompletionMarker"),
+        timelineStartLabel: document.getElementById("timelineStartLabel"),
+        timelineCurrentLabel: document.getElementById("timelineCurrentLabel"),
+        timelineEndLabel: document.getElementById("timelineEndLabel"),
+        timelineRealProgress: document.getElementById("timelineRealProgress"),
+        timelineProjectedProgress: document.getElementById("timelineProjectedProgress"),
+        timelineRealLine: document.getElementById("timelineRealLine"),
+        timelineProjLine: document.getElementById("timelineProjLine"),
+        timelineNowPoint: document.getElementById("timelineNowPoint"),
         speedSelect: document.getElementById("speedSelect"),
         runPauseBtn: document.getElementById("runPauseBtn"),
         resetBtn: document.getElementById("resetBtn"),
@@ -2465,6 +2933,8 @@
       function init() {
         populateDemandSectorSelect();
         syncConfigInputsFromState();
+        ui.timelineHorizonSelect.value = state.timelineHorizon;
+        ui.timelineRateModeSelect.value = state.timelineRateMode;
         resetSimulation(true);
         bindEvents();
         setSimPanelCollapsed(false);
@@ -2480,6 +2950,16 @@
         ui.speedSelect.addEventListener("change", (event) => {
           state.secondsPerProdHour = Number(event.target.value) || 60;
           updateSpeedLabel();
+        });
+
+        ui.timelineHorizonSelect.addEventListener("change", (event) => {
+          state.timelineHorizon = String(event.target.value || "120");
+          requestRender();
+        });
+
+        ui.timelineRateModeSelect.addEventListener("change", (event) => {
+          state.timelineRateMode = String(event.target.value || "avg");
+          requestRender();
         });
 
         ui.runPauseBtn.addEventListener("click", toggleRunPause);
@@ -2646,6 +3126,7 @@
           });
         }
 
+        registerProductionPoint(false);
         requestRender();
       }
 
@@ -2655,6 +3136,8 @@
         state.running = true;
         ui.runPauseBtn.textContent = "Pausar";
         state.sectors = buildFakeData();
+        state.productionHistory = [];
+        registerProductionPoint(true);
         updateDistributionTotalLabel();
         updateDemandStatus(ui.demandSectorSelect.value);
         updateSpeedLabel();
@@ -2976,6 +3459,176 @@
         return sector.linhasSeparadas / elapsedHours;
       }
 
+      function getTotalSeparatedLines() {
+        return sum(state.sectors, "linhasSeparadas");
+      }
+
+      function getTotalDemandLines() {
+        return sum(state.sectors, "linhasTotais");
+      }
+
+      function registerProductionPoint(force) {
+        const minute = state.simulatedMinutes;
+        const separated = getTotalSeparatedLines();
+        const lastPoint = state.productionHistory[state.productionHistory.length - 1];
+        const roundedMinute = Math.floor(minute);
+
+        if (!force && lastPoint) {
+          const sameMinute = Math.floor(lastPoint.minute) === roundedMinute;
+          const sameValue = Math.abs(lastPoint.value - separated) < 0.0001;
+          if (sameMinute && sameValue) return;
+        }
+
+        state.productionHistory.push({
+          minute,
+          value: separated
+        });
+
+        if (state.productionHistory.length > 1400) {
+          state.productionHistory.splice(0, state.productionHistory.length - 1400);
+        }
+      }
+
+      function getProjectionRate() {
+        const totalSeparated = getTotalSeparatedLines();
+        const elapsedHours = getElapsedSimulationHours();
+        const avgRate = elapsedHours > 0 ? totalSeparated / elapsedHours : 0;
+
+        if (state.timelineRateMode === "last-hour") {
+          const lastHourRate = sum(state.sectors, "producaoHoraAnterior");
+          if (lastHourRate > 0) return lastHourRate;
+        }
+
+        return avgRate;
+      }
+
+      function getTimelineWindowEnd(nowMinutes) {
+        if (state.timelineHorizon === "shift-end") {
+          const minuteOfDay = ((Math.floor(nowMinutes) % (24 * 60)) + (24 * 60)) % (24 * 60);
+          let delta = state.config.workEndMin - minuteOfDay;
+          if (delta <= 0) delta += 24 * 60;
+          return nowMinutes + delta;
+        }
+
+        const horizonMinutes = Math.max(30, Number(state.timelineHorizon) || 120);
+        return nowMinutes + horizonMinutes;
+      }
+
+      function getCurrentShiftStart(nowMinutes) {
+        const minuteOfDay = ((Math.floor(nowMinutes) % (24 * 60)) + (24 * 60)) % (24 * 60);
+        const dayBase = nowMinutes - minuteOfDay;
+        const shiftStartToday = dayBase + state.config.workStartMin;
+        if (minuteOfDay >= state.config.workStartMin) return shiftStartToday;
+        return shiftStartToday - (24 * 60);
+      }
+
+      function renderOperationTimeline() {
+        const total = Math.max(getTotalDemandLines(), 1);
+        const separated = getTotalSeparatedLines();
+        const remaining = Math.max(total - separated, 0);
+        const now = state.simulatedMinutes;
+        const start = getCurrentShiftStart(now);
+        const end = Math.max(getTimelineWindowEnd(now), now + 1);
+        const totalSpan = Math.max(end - start, 1);
+        const futureHours = Math.max((end - now) / 60, 0);
+        const rate = Math.max(getProjectionRate(), 0);
+        const projectedAdd = Math.min(remaining, rate * futureHours);
+        const projectedTotal = Math.min(total, separated + projectedAdd);
+        const realPct = clamp((separated / total) * 100, 0, 100);
+        const projectedPct = clamp((projectedTotal / total) * 100, 0, 100);
+        const projectedExtraPct = Math.max(projectedPct - realPct, 0);
+        const nowPos = clamp(((now - start) / totalSpan) * 100, 0, 100);
+        const pastWidth = nowPos;
+        const futureWidth = Math.max(100 - nowPos, 0);
+
+        const etaMinutes = rate > 0 && remaining > 0
+          ? now + ((remaining / rate) * 60)
+          : null;
+        const etaInsideWindow = etaMinutes !== null && etaMinutes <= end;
+
+        ui.timelinePastSegment.style.width = `${pastWidth.toFixed(2)}%`;
+        ui.timelineFutureSegment.style.width = `${futureWidth.toFixed(2)}%`;
+        ui.timelineNowMarker.style.left = `${nowPos.toFixed(2)}%`;
+
+        if (etaInsideWindow) {
+          const completionPos = clamp(((etaMinutes - start) / totalSpan) * 100, 0, 100);
+          ui.timelineCompletionMarker.style.display = "block";
+          ui.timelineCompletionMarker.style.left = `${completionPos.toFixed(2)}%`;
+        } else {
+          ui.timelineCompletionMarker.style.display = "none";
+        }
+
+        ui.timelineRealProgress.style.width = `${realPct.toFixed(2)}%`;
+        ui.timelineProjectedProgress.style.left = `${realPct.toFixed(2)}%`;
+        ui.timelineProjectedProgress.style.width = `${projectedExtraPct.toFixed(2)}%`;
+
+        ui.timelinePastValue.textContent = `${fmtInt(separated)} linhas`;
+        ui.timelinePastSub.textContent = `${fmtPct(realPct)} concluido ate agora`;
+        ui.timelineNowValue.textContent = formatSimulatedClock(now);
+        ui.timelineNowSub.textContent = `Ritmo ${fmtInt(rate)} l/h (${state.timelineRateMode === "last-hour" ? "ult. hora" : "media"})`;
+        ui.timelineFutureValue.textContent = `+${fmtInt(projectedAdd)} linhas`;
+        ui.timelineFutureSub.textContent = `${fmtPct(projectedPct)} projetado ate ${formatSimulatedClock(end)}`;
+
+        if (remaining <= 0) {
+          ui.timelineEtaValue.textContent = "Concluido";
+          ui.timelineEtaSub.textContent = "Demanda totalmente finalizada";
+        } else if (etaMinutes === null) {
+          ui.timelineEtaValue.textContent = "Sem previsao";
+          ui.timelineEtaSub.textContent = "Sem ritmo suficiente para projetar ETA";
+        } else {
+          ui.timelineEtaValue.textContent = formatSimulatedClock(etaMinutes);
+          ui.timelineEtaSub.textContent = etaInsideWindow
+            ? "Conclusao dentro da janela selecionada"
+            : "Conclusao apos a janela selecionada";
+        }
+
+        ui.timelineStartLabel.textContent = `Inicio: ${formatSimulatedClock(start)}`;
+        ui.timelineCurrentLabel.textContent = `Agora: ${formatSimulatedClock(now)}`;
+        ui.timelineEndLabel.textContent = `Fim da janela: ${formatSimulatedClock(end)}`;
+
+        renderTimelineHistory(start, now, end, separated, projectedTotal, total);
+      }
+
+      function renderTimelineHistory(start, now, end, separated, projectedTotal, total) {
+        const viewWidth = 100;
+        const viewHeight = 40;
+        const usableHeight = viewHeight - 1;
+        const span = Math.max(end - start, 1);
+        const maxValue = Math.max(total, projectedTotal, separated, 1);
+        const history = state.productionHistory.filter((point) => point.minute >= start && point.minute <= now);
+
+        if (!history.length) {
+          history.push({ minute: start, value: 0 });
+          history.push({ minute: now, value: separated });
+        } else {
+          const last = history[history.length - 1];
+          if (Math.abs(last.minute - now) > 0.0001 || Math.abs(last.value - separated) > 0.0001) {
+            history.push({ minute: now, value: separated });
+          }
+        }
+
+        const realPoints = history.map((point) => {
+          const x = clamp(((point.minute - start) / span) * viewWidth, 0, viewWidth);
+          const y = usableHeight - clamp((point.value / maxValue) * usableHeight, 0, usableHeight);
+          return `${x.toFixed(3)},${y.toFixed(3)}`;
+        });
+
+        ui.timelineRealLine.setAttribute("points", realPoints.join(" "));
+
+        const nowX = clamp(((now - start) / span) * viewWidth, 0, viewWidth);
+        const nowY = usableHeight - clamp((separated / maxValue) * usableHeight, 0, usableHeight);
+        ui.timelineNowPoint.setAttribute("cx", nowX.toFixed(3));
+        ui.timelineNowPoint.setAttribute("cy", nowY.toFixed(3));
+
+        if (projectedTotal > separated) {
+          const endX = clamp(((end - start) / span) * viewWidth, 0, viewWidth);
+          const endY = usableHeight - clamp((projectedTotal / maxValue) * usableHeight, 0, usableHeight);
+          ui.timelineProjLine.setAttribute("points", `${nowX.toFixed(3)},${nowY.toFixed(3)} ${endX.toFixed(3)},${endY.toFixed(3)}`);
+        } else {
+          ui.timelineProjLine.setAttribute("points", `${nowX.toFixed(3)},${nowY.toFixed(3)} ${nowX.toFixed(3)},${nowY.toFixed(3)}`);
+        }
+      }
+
       function requestRender() {
         if (renderFrameId !== null) return;
         renderFrameId = requestAnimationFrame(() => {
@@ -2987,6 +3640,7 @@
       function renderAll() {
         const visible = getVisibleSectors();
         renderKPIs(visible);
+        renderOperationTimeline();
         renderMainTable(visible);
         renderTimestamp();
         renderClock();
