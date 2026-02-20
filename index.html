@@ -1,0 +1,3446 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sincronismo - Simulador Sem Backend</title>
+  <style>
+    :root {
+      --bg-1: #0f172a;
+      --bg-2: #1e293b;
+      --bg-3: #475569;
+      --ink-1: #0f172a;
+      --ink-2: #475569;
+      --line: #e2e8f0;
+      --line-soft: #edf2f7;
+      --panel: #ffffff;
+      --blue: #2563eb;
+      --blue-soft: #dbeafe;
+      --blue-strong: #1d4ed8;
+      --green: #16a34a;
+      --amber: #d97706;
+      --red: #dc2626;
+      --shadow-lg: 0 28px 70px rgba(15, 23, 42, 0.20);
+      --shadow-md: 0 14px 34px rgba(15, 23, 42, 0.12);
+      --glass: rgba(255, 255, 255, 0.96);
+      --glass-line: rgba(255, 255, 255, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(96, 165, 250, 0.20), transparent 60%),
+        radial-gradient(1000px 700px at 90% -20%, rgba(148, 163, 184, 0.22), transparent 60%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 45%, var(--bg-3));
+      background-attachment: fixed;
+      color: var(--ink-1);
+      min-height: 100vh;
+      padding: 14px;
+    }
+
+    .app {
+      max-width: 1420px;
+      margin: 0 auto;
+      background: var(--glass);
+      border: 1px solid var(--glass-line);
+      border-radius: 24px;
+      box-shadow: var(--shadow-lg);
+      padding: 16px;
+      backdrop-filter: blur(22px) saturate(1.6);
+      -webkit-backdrop-filter: blur(22px) saturate(1.6);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent 16%);
+    }
+
+    .header {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.97), rgba(248, 250, 252, 0.95));
+      border-radius: 18px;
+      padding: 18px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      box-shadow:
+        0 10px 26px rgba(15, 23, 42, 0.08),
+        0 2px 8px rgba(15, 23, 42, 0.05);
+    }
+
+    .header::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #0f172a, #1d4ed8, #60a5fa);
+    }
+
+    .header > div {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 33px;
+      letter-spacing: -0.025em;
+      font-weight: 800;
+      background: linear-gradient(135deg, #0f172a, #1e293b 70%, #334155);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .header p {
+      margin: 2px 0 0;
+      color: #334155;
+      font-size: 13.5px;
+      font-weight: 500;
+      opacity: 0.92;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: nowrap;
+      justify-content: flex-end;
+    }
+
+    .header-actions .btn {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+
+    #configToggleBtn {
+      order: 1;
+    }
+
+    #chartBtn {
+      order: 2;
+    }
+
+    .btn-config {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-config .btn-icon,
+    .btn-config .btn-label {
+      position: relative;
+      z-index: 1;
+    }
+
+    .btn-config .btn-icon {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 11px;
+      cursor: pointer;
+      font-weight: 700;
+      padding: 10px 14px;
+      transition: transform 0.20s ease, box-shadow 0.20s ease, opacity 0.20s ease;
+      position: relative;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    .btn::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -140%;
+      width: 120%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.34), transparent);
+      transition: left 0.6s ease;
+    }
+
+    .btn:hover::before {
+      left: 120%;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0f172a, #334155);
+      color: #fff;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.26);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 32px rgba(15, 23, 42, 0.32);
+    }
+
+    .btn-light {
+      background: #f8fafc;
+      color: #0f172a;
+      border: 1px solid var(--line);
+    }
+
+    .btn-light:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.10);
+    }
+
+    .btn-danger {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #fff;
+      box-shadow: 0 10px 22px rgba(220, 38, 38, 0.24);
+    }
+
+    .btn-danger:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 13px 28px rgba(220, 38, 38, 0.30);
+    }
+
+    .sim-panel {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(241, 245, 249, 0.94));
+      border: 1px solid rgba(148, 163, 184, 0.30);
+      border-radius: 18px;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+      box-shadow:
+        0 14px 30px rgba(15, 23, 42, 0.10),
+        0 2px 8px rgba(15, 23, 42, 0.05);
+      max-height: 1200px;
+      overflow: hidden;
+      transition:
+        max-height 0.35s ease,
+        opacity 0.25s ease,
+        padding 0.25s ease,
+        margin-bottom 0.25s ease,
+        border-color 0.25s ease,
+        box-shadow 0.25s ease;
+    }
+
+    .sim-panel.is-collapsed {
+      max-height: 0;
+      opacity: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      margin-bottom: 0;
+      border-color: transparent;
+      box-shadow: none;
+      pointer-events: none;
+    }
+
+    .sim-box {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.95));
+      border: 1px solid rgba(203, 213, 225, 0.9);
+      border-radius: 14px;
+      padding: 11px 12px;
+      box-shadow:
+        0 8px 18px rgba(15, 23, 42, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.86);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      position: relative;
+      overflow: hidden;
+      min-height: 98px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+
+    .sim-box::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #0f172a, #3b82f6, #93c5fd);
+      opacity: 0.22;
+      transition: opacity 0.2s ease;
+    }
+
+    .sim-box:hover {
+      transform: translateY(-2px);
+      border-color: rgba(59, 130, 246, 0.30);
+      box-shadow:
+        0 12px 26px rgba(15, 23, 42, 0.10),
+        0 4px 12px rgba(59, 130, 246, 0.10);
+    }
+
+    .sim-box:hover::before {
+      opacity: 0.95;
+    }
+
+    .sim-label {
+      color: var(--ink-2);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .sim-value {
+      font-weight: 800;
+      font-size: 22px;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+    }
+
+    .sim-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .sim-actions select {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-weight: 600;
+      color: #0f172a;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+    }
+
+    .sim-actions select:focus {
+      outline: none;
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.35);
+    }
+
+    .sim-config-box {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      min-height: 142px;
+    }
+
+    .sim-config-grid {
+      display: grid;
+      gap: 0.45rem;
+    }
+
+    .sim-config-grid.two {
+      grid-template-columns: repeat(2, minmax(84px, 1fr));
+    }
+
+    .sim-config-grid.three {
+      grid-template-columns: repeat(3, minmax(58px, 1fr));
+    }
+
+    .sim-config-grid label {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      font-size: 0.69rem;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .sim-config-grid input,
+    .sim-config-grid select {
+      border: 1px solid #d5deea;
+      background: #fff;
+      border-radius: 8px;
+      padding: 0.44rem 0.52rem;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #0f172a;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+    }
+
+    .sim-config-grid input:focus,
+    .sim-config-grid select:focus {
+      outline: none;
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.25);
+    }
+
+    .sim-config-footer {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .btn-mini {
+      padding: 0.38rem 0.65rem;
+      border-radius: 8px;
+      font-size: 0.73rem;
+      font-weight: 700;
+      line-height: 1;
+      box-shadow: none;
+    }
+
+    .sim-helper {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #475569;
+      letter-spacing: 0.01em;
+    }
+
+    .sim-helper.status-run {
+      color: #166534;
+    }
+
+    .sim-helper.status-break {
+      color: #9a3412;
+    }
+
+    .sim-helper.status-off {
+      color: #475569;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(230px, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.99), rgba(248, 250, 252, 0.95));
+      border: 1px solid rgba(226, 232, 240, 0.9);
+      border-radius: 18px;
+      padding: 14px 15px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: box-shadow 0.28s ease, transform 0.28s ease, border-color 0.22s ease;
+      position: relative;
+      overflow: hidden;
+      box-shadow:
+        0 14px 30px rgba(15, 23, 42, 0.12),
+        0 2px 10px rgba(15, 23, 42, 0.07),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .stat-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      opacity: 0;
+      transition: opacity 0.24s ease;
+      background: linear-gradient(90deg, var(--accent-color), rgba(255, 255, 255, 0.45), var(--accent-color));
+    }
+
+    .stat-card::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.24),
+        transparent
+      );
+      transition: left 0.85s ease;
+      pointer-events: none;
+    }
+
+    .stat-card[data-detail="setores"] { --accent-color: #3b82f6; }
+    .stat-card[data-detail="separadas"] { --accent-color: #22c55e; }
+    .stat-card[data-detail="restantes"] { --accent-color: #f59e0b; }
+    .stat-card[data-detail="progresso"] { --accent-color: #0284c7; }
+
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow:
+        0 22px 44px rgba(15, 23, 42, 0.16),
+        0 8px 22px rgba(59, 130, 246, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
+      border-color: rgba(59, 130, 246, 0.30);
+    }
+
+    .stat-card:hover::before {
+      opacity: 1;
+    }
+
+    .stat-card:hover::after {
+      left: 100%;
+    }
+
+    .stat-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      flex-shrink: 0;
+      position: relative;
+      overflow: hidden;
+      box-shadow:
+        0 10px 24px rgba(15, 23, 42, 0.22),
+        inset 0 1px 0 rgba(255, 255, 255, 0.35);
+      transition: transform 0.28s ease, box-shadow 0.28s ease;
+    }
+
+    .stat-icon::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+      animation: statIconShine 3s ease-in-out infinite;
+    }
+
+    .stat-card:hover .stat-icon {
+      transform: scale(1.08) rotate(4deg);
+      box-shadow:
+        0 14px 30px rgba(15, 23, 42, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.45);
+    }
+
+    .stat-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke-width: 2.3;
+      position: relative;
+      z-index: 1;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+    }
+
+    .stat-icon-primary {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 40%, #334155 100%);
+    }
+
+    .stat-icon-success {
+      background: linear-gradient(135deg, #166534 0%, #16a34a 45%, #22c55e 100%);
+    }
+
+    .stat-icon-warning {
+      background: linear-gradient(135deg, #92400e 0%, #d97706 45%, #f59e0b 100%);
+    }
+
+    .stat-icon-info {
+      background: linear-gradient(135deg, #0c4a6e 0%, #0369a1 45%, #0284c7 100%);
+    }
+
+    @keyframes statIconShine {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(180deg); }
+    }
+
+    .stat-content {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .stat-title {
+      color: var(--ink-2);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      font-weight: 700;
+    }
+
+    .stat-number {
+      margin-top: 3px;
+      font-size: 30px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #0f172a, #334155);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .ring-wrap {
+      margin-left: auto;
+      width: 56px;
+      height: 56px;
+      position: relative;
+      border-radius: 999px;
+      background: conic-gradient(var(--blue) calc(var(--pct, 0) * 1%), #e2e8f0 0);
+      filter: drop-shadow(0 8px 16px rgba(37, 99, 235, 0.22));
+      transition: transform 0.2s ease;
+    }
+
+    .ring-wrap:hover {
+      transform: scale(1.06);
+    }
+
+    .ring-wrap::after {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      border-radius: 999px;
+      background: #fff;
+    }
+
+    .ring-wrap span {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      z-index: 1;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--ink-2);
+    }
+
+    .table-shell {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.94));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+    }
+
+    .table-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 13px;
+      border-bottom: 1px solid var(--line);
+      background: #f8fafc;
+    }
+
+    .table-head h2 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: -0.02em;
+    }
+
+    .table-head p {
+      margin: 3px 0 0;
+      color: var(--ink-2);
+      font-size: 12px;
+    }
+
+    .search {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 11px;
+      width: 260px;
+      max-width: 100%;
+      font-size: 14px;
+      background: #fff;
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05);
+    }
+
+    .search:focus {
+      outline: none;
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.30);
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: 58vh;
+      scrollbar-width: thin;
+      scrollbar-color: #94a3b8 #f1f5f9;
+    }
+
+    .table-wrap::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    .table-wrap::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+
+    .table-wrap::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, #94a3b8, #64748b);
+      border-radius: 999px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1100px;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line-soft);
+      padding: 10px 10px;
+      text-align: left;
+      font-size: 13px;
+      vertical-align: middle;
+      background: rgba(255, 255, 255, 0.85);
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background: #f8fafc;
+      color: #334155;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      font-size: 11px;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      transition: color 0.16s ease;
+    }
+
+    th:hover {
+      color: var(--blue-strong);
+    }
+
+    th.sort-active {
+      color: var(--blue);
+    }
+
+    tr:hover td {
+      background: #f8fbff;
+    }
+
+    .setor {
+      font-weight: 800;
+      color: #1e3a8a;
+      letter-spacing: 0.01em;
+    }
+
+    .muted {
+      color: var(--ink-2);
+    }
+
+    .progress-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      min-width: 220px;
+    }
+
+    .bar {
+      height: 8px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .bar > i {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, #2563eb, #60a5fa);
+      transition: width 0.3s ease;
+    }
+
+    .meta-box {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 130px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid transparent;
+      width: fit-content;
+    }
+
+    .c-ok {
+      background: #dcfce7;
+      color: #166534;
+      border-color: #bbf7d0;
+    }
+
+    .c-good {
+      background: #dbeafe;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+
+    .c-warn {
+      background: #fef3c7;
+      color: #92400e;
+      border-color: #fde68a;
+    }
+
+    .c-bad {
+      background: #fee2e2;
+      color: #991b1b;
+      border-color: #fecaca;
+    }
+
+    .c-neutral {
+      background: #f1f5f9;
+      color: #334155;
+      border-color: #e2e8f0;
+    }
+
+    .timestamp {
+      margin-top: 9px;
+      color: var(--ink-2);
+      font-size: 12px;
+      letter-spacing: 0.02em;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, .62);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      padding: 14px;
+      backdrop-filter: blur(4px);
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-card {
+      background: #fff;
+      width: min(1200px, 100%);
+      max-height: 92vh;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      margin-inline: auto;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 34px 70px rgba(2, 6, 23, 0.34);
+      animation: pop-in 0.22s ease;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      background: linear-gradient(135deg, #0f172a, #334155);
+      color: #fff;
+      position: relative;
+    }
+
+    .modal-head::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #1d4ed8, #60a5fa, #93c5fd);
+    }
+
+    .modal-head h3 {
+      margin: 0;
+      font-size: 21px;
+      letter-spacing: -0.02em;
+    }
+
+    .modal-head p {
+      margin: 2px 0 0;
+      opacity: .85;
+      font-size: 12px;
+    }
+
+    .modal-close {
+      border: 0;
+      width: 38px;
+      height: 38px;
+      border-radius: 9px;
+      background: rgba(255, 255, 255, .16);
+      color: #fff;
+      font-size: 21px;
+      cursor: pointer;
+      transition: transform 0.16s ease, background 0.16s ease;
+    }
+
+    .modal-close:hover {
+      transform: scale(1.06);
+      background: rgba(255, 255, 255, .26);
+    }
+
+    .modal-body {
+      padding: 12px;
+      overflow: auto;
+      background: #fff;
+    }
+
+    #detailModal .modal-body {
+      padding: 0;
+      overflow: auto;
+      background: #fff;
+    }
+
+    .summary-row.modal-stats-summary {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: stretch;
+      gap: 0.85rem;
+      margin: 0;
+      padding: 1rem 1rem 0.95rem;
+      background: linear-gradient(145deg, #e8f2ff 0%, #f2f7ff 45%, #f8fafc 100%);
+      border-bottom: 1px solid rgba(59, 130, 246, 0.12);
+      overflow: hidden;
+    }
+
+    .summary-row.modal-stats-summary::-webkit-scrollbar {
+      height: 8px;
+    }
+
+    .summary-row.modal-stats-summary::-webkit-scrollbar-track {
+      background: rgba(59, 130, 246, 0.10);
+      border-radius: 999px;
+    }
+
+    .summary-row.modal-stats-summary::-webkit-scrollbar-thumb {
+      background: rgba(59, 130, 246, 0.36);
+      border-radius: 999px;
+    }
+
+    .summary-row.modal-stats-summary .sum-box {
+      flex: 0 0 212px;
+      min-width: 212px;
+      border-radius: 14px;
+      padding: 0.9rem 0.95rem;
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 94px;
+      background: #fff;
+      border: 1px solid rgba(59, 130, 246, 0.14);
+      box-shadow:
+        0 8px 20px rgba(59, 130, 246, 0.10),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8);
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .summary-row.modal-stats-summary .sum-box:hover {
+      transform: translateY(-2px);
+      border-color: rgba(59, 130, 246, 0.26);
+      box-shadow:
+        0 12px 28px rgba(59, 130, 246, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .summary-row.modal-stats-summary .sum-box.modal-stat-primary {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 42%, #334155 100%);
+      border-color: rgba(30, 64, 175, 0.28);
+      box-shadow:
+        0 14px 30px rgba(15, 23, 42, 0.28),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    }
+
+    .summary-row.modal-stats-summary .sum-box.modal-stat-primary .modal-stat-label {
+      color: rgba(191, 219, 254, 0.95);
+    }
+
+    .summary-row.modal-stats-summary .sum-box.modal-stat-primary .modal-stat-value {
+      color: #fff;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+    }
+
+    .summary-row.modal-stats-summary .modal-stat-label {
+      display: block;
+      font-size: 0.70rem;
+      font-weight: 800;
+      color: #64748b;
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      line-height: 1.2;
+      text-align: center;
+      width: 100%;
+    }
+
+    .summary-row.modal-stats-summary .modal-stat-value {
+      display: block;
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: #1e293b;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      text-align: center;
+      width: 100%;
+    }
+
+    #detailModal .table-wrap {
+      margin: 0.95rem;
+      border-radius: 14px;
+      border: 1px solid #dbe5f1;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+      max-height: calc(92vh - 280px);
+      background: #fff;
+      overflow: auto;
+    }
+
+    #detailModal .table-wrap table {
+      width: 100%;
+      min-width: 900px;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+      background: #fff;
+    }
+
+    #detailModal .table-wrap thead {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+    }
+
+    #detailModal .table-wrap th {
+      background: #f8fafc;
+      padding: 0.88rem 0.95rem;
+      text-align: center;
+      font-weight: 700;
+      color: #334155;
+      border-bottom: 1px solid #cbd5e1;
+      font-size: 0.70rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      position: relative;
+    }
+
+    #detailModal .table-wrap th::after {
+      display: none;
+    }
+
+    #detailModal .table-wrap td {
+      padding: 0.95rem 1rem;
+      border-bottom: 1px solid rgba(59, 130, 246, 0.10);
+      color: #475569;
+      text-align: center;
+      vertical-align: middle;
+      background: #fff;
+      transition: all 0.24s ease;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #detailModal .table-wrap tbody tr {
+      transition: all 0.24s ease;
+    }
+
+    #detailModal .table-wrap tbody tr:hover {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.03) 0%, rgba(167, 139, 250, 0.03) 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(59, 130, 246, 0.12);
+    }
+
+    #detailModal .table-wrap tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    #detailModal .table-wrap tbody td:first-child {
+      position: relative;
+      text-align: left;
+      font-weight: 700;
+      color: #1d4ed8;
+      font-size: 0.93rem;
+      padding-left: 1.8rem;
+      white-space: nowrap;
+    }
+
+    #detailModal .table-wrap tbody td:first-child::before {
+      content: "";
+      position: absolute;
+      left: 0.78rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #60a5fa);
+      box-shadow: 0 2px 5px rgba(59, 130, 246, 0.32);
+    }
+
+    #detailModal .table-wrap tbody td:nth-child(2) {
+      text-align: left;
+      max-width: 320px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #detailModal .table-wrap::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    #detailModal .table-wrap::-webkit-scrollbar-track {
+      background: rgba(59, 130, 246, 0.10);
+      border-radius: 999px;
+    }
+
+    #detailModal .table-wrap::-webkit-scrollbar-thumb {
+      background: rgba(59, 130, 246, 0.34);
+      border-radius: 999px;
+    }
+
+    .chart-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .f-btn {
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      color: #0f172a;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .f-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 16px rgba(15, 23, 42, 0.10);
+    }
+
+    .f-btn.active {
+      background: #1d4ed8;
+      color: #fff;
+      border-color: #1d4ed8;
+      box-shadow: 0 10px 20px rgba(37, 99, 235, 0.25);
+    }
+
+    .chart-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      min-height: 200px;
+    }
+
+    .chart-row {
+      display: grid;
+      grid-template-columns: minmax(200px, 1.15fr) minmax(260px, 2fr) minmax(120px, 0.6fr);
+      gap: 12px;
+      align-items: center;
+      font-size: 12px;
+      padding: 12px 14px;
+      border: 1px solid #dbe5f1;
+      border-radius: 14px;
+      background: linear-gradient(145deg, #ffffff 0%, #f8fbff 100%);
+      box-shadow:
+        0 8px 18px rgba(15, 23, 42, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .chart-row:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        0 12px 24px rgba(15, 23, 42, 0.12),
+        0 3px 8px rgba(37, 99, 235, 0.16);
+    }
+
+    .chart-sector {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+    }
+
+    .chart-sector-top {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .chart-sector-code {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 58px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #e0e7ff;
+      color: #1e3a8a;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      font-size: 0.73rem;
+      border: 1px solid #bfdbfe;
+      flex-shrink: 0;
+    }
+
+    .chart-sector-tag {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #eef2ff;
+      color: #4338ca;
+      border: 1px solid #c7d2fe;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .chart-sector-desc {
+      color: #475569;
+      font-size: 0.77rem;
+      line-height: 1.25;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chart-progress {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .chart-progress-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      color: #1f2937;
+      font-size: 0.73rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      min-width: 0;
+    }
+
+    .chart-progress-head > span:first-child {
+      color: #334155;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .chart-progress-head > span:last-child {
+      color: #1d4ed8;
+      font-size: 0.78rem;
+      flex-shrink: 0;
+    }
+
+    .chart-track {
+      height: 16px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+      border: 1px solid #cbd5e1;
+      box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.14);
+    }
+
+    .chart-track > i {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, #1d4ed8 0%, #2563eb 40%, #60a5fa 100%);
+      transition: width 0.35s ease;
+      box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.24) inset,
+        0 2px 6px rgba(30, 64, 175, 0.30);
+    }
+
+    .chart-kpi {
+      display: grid;
+      justify-items: end;
+      gap: 2px;
+      text-align: right;
+      min-width: 0;
+    }
+
+    .chart-kpi-value {
+      font-size: 1.2rem;
+      line-height: 1;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .chart-kpi-label {
+      color: #64748b;
+      font-size: 0.66rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      white-space: nowrap;
+    }
+
+    /* Visual da tabela inspirado no sincronismo original */
+    .table-container {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.90));
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      box-shadow:
+        0 15px 35px rgba(0, 0, 0, 0.10),
+        0 5px 15px rgba(0, 0, 0, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      overflow: hidden;
+      margin-bottom: 2rem;
+      padding: 1.1rem;
+    }
+
+    .table-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.9rem;
+      gap: 1.2rem;
+    }
+
+    .table-title h2 {
+      margin: 0 0 0.35rem;
+      color: #1a202c;
+      font-size: 1.45rem;
+      font-weight: 700;
+    }
+
+    .table-title p {
+      margin: 0;
+      color: #718096;
+      font-size: 0.87rem;
+    }
+
+    .table-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .search-box {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-box svg {
+      position: absolute;
+      left: 12px;
+      width: 16px;
+      height: 16px;
+      color: #a0aec0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .search-box input {
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #2d3748;
+      font-size: 0.875rem;
+      width: 260px;
+      transition: all 0.2s ease;
+    }
+
+    .search-box input:focus {
+      outline: none;
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+    }
+
+    .search-box input::placeholder {
+      color: #a0aec0;
+    }
+
+    .table-container .table-wrapper {
+      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      overflow: auto;
+      box-shadow:
+        0 10px 25px -5px rgba(0, 0, 0, 0.10),
+        0 8px 10px -6px rgba(0, 0, 0, 0.10),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+      position: relative;
+      max-height: 64vh;
+    }
+
+    .table-container .table-wrapper::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      min-width: 1200px;
+      height: 4px;
+      background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      z-index: 3;
+      border-radius: 16px 16px 0 0;
+    }
+
+    .table-container table {
+      min-width: 1200px;
+      width: 100%;
+      font-size: 0.8rem;
+      position: relative;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .table-container .th-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.3s ease;
+    }
+
+    .table-container .sort-icon {
+      width: 16px;
+      height: 16px;
+      color: #718096;
+      transition: all 0.3s ease;
+      transform: rotate(0deg);
+      opacity: 0.5;
+      flex-shrink: 0;
+    }
+
+    .table-container .th-content:hover .sort-icon {
+      color: #4a5568;
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    .table-container th {
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      color: #2d3748;
+      padding: 1.05rem 0.95rem;
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: none;
+      letter-spacing: -0.015em;
+      border: none;
+      border-bottom: 2px solid #e2e8f0;
+      position: sticky;
+      top: 0;
+      z-index: 12;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .table-container th[data-sort="progresso"],
+    .table-container tbody td:nth-child(7) {
+      min-width: 240px;
+    }
+
+    .table-container th:hover {
+      background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%);
+      color: #1a202c;
+    }
+
+    .table-container th.sorted {
+      background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+      color: #234e52;
+    }
+
+    .table-container th.sorted .sort-icon {
+      color: #38b2ac;
+      opacity: 1;
+      transform: scale(1.2);
+    }
+
+    .table-container th.sorted-asc .sort-icon {
+      transform: rotate(180deg) scale(1.2);
+    }
+
+    .table-container th.sorted-desc .sort-icon {
+      transform: rotate(0deg) scale(1.2);
+    }
+
+    .table-container td {
+      padding: 0.85rem 0.95rem;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 0.82rem;
+      vertical-align: middle;
+      transition: all 0.3s ease;
+      background: #fff;
+    }
+
+    .table-container tbody tr {
+      border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+      position: relative;
+      box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.02);
+      transition: box-shadow 0.22s ease;
+    }
+
+    .table-container tbody tr::after {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(226, 232, 240, 0.3) 10%,
+        rgba(226, 232, 240, 0.8) 50%,
+        rgba(226, 232, 240, 0.3) 90%,
+        transparent 100%
+      );
+      opacity: 0.7;
+    }
+
+    .table-container tbody tr:nth-child(even) {
+      background-color: rgba(248, 250, 252, 0.7);
+    }
+
+    .table-container tbody tr:hover {
+      background-color: rgba(102, 126, 234, 0.04);
+      box-shadow:
+        0 1px 0 0 rgba(102, 126, 234, 0.10),
+        0 2px 4px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    .table-container tbody tr:hover::after {
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(102, 126, 234, 0.2) 10%,
+        rgba(102, 126, 234, 0.4) 50%,
+        rgba(102, 126, 234, 0.2) 90%,
+        transparent 100%
+      );
+      opacity: 1;
+    }
+
+    .table-container tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    .table-container tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .sector-cell {
+      font-weight: 600;
+      color: #2d3748;
+      padding: 0.5rem !important;
+    }
+
+    .sector-cell-container {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.35rem 0.45rem;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(102, 126, 234, 0.06), rgba(118, 75, 162, 0.05));
+      border: 1px solid rgba(102, 126, 234, 0.10);
+    }
+
+    .sector-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .sector-avatar::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+      transition: left 0.6s ease;
+    }
+
+    .table-container tbody tr:hover .sector-avatar::before {
+      left: 100%;
+    }
+
+    .sector-name {
+      font-weight: 700;
+      color: #2d3748;
+      font-size: 0.88rem;
+      line-height: 1.1;
+    }
+
+    .sector-code {
+      font-size: 0.72rem;
+      color: #718096;
+      margin-top: 0.125rem;
+      line-height: 1.1;
+    }
+
+    .description-cell {
+      color: #4a5568;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .number-cell {
+      font-weight: 600;
+      font-feature-settings: "tnum";
+      text-align: right;
+    }
+
+    .text-success {
+      color: #38a169;
+      font-weight: 600;
+    }
+
+    .text-danger {
+      color: #e53e3e;
+      font-weight: 600;
+    }
+
+    .text-warning {
+      color: #ed8936;
+      font-weight: 600;
+    }
+
+    .cell-inline {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.45rem;
+    }
+
+    .cell-inline.end {
+      justify-content: flex-end;
+    }
+
+    .progress-container {
+      width: 100%;
+      min-width: 130px;
+      height: 24px;
+      background-color: #f1f5f9;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #e2e8f0;
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+      position: relative;
+      flex: 1 1 auto;
+    }
+
+    .progress-bar {
+      height: 100%;
+      border-radius: 8px;
+      transition: width 0.8s ease;
+      min-width: 0;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .progress-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.71rem;
+      font-feature-settings: "tnum";
+      letter-spacing: 0.01em;
+      pointer-events: none;
+      z-index: 2;
+      white-space: nowrap;
+      padding: 0 0.35rem;
+    }
+
+    .progress-label.light {
+      color: #ffffff;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.24);
+    }
+
+    .progress-label.dark {
+      color: #1f2937;
+      text-shadow: none;
+    }
+
+    .progress-bar::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        45deg,
+        rgba(255, 255, 255, 0.2) 25%,
+        transparent 25%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.2) 50%,
+        rgba(255, 255, 255, 0.2) 75%,
+        transparent 75%
+      );
+      background-size: 20px 20px;
+      animation: move-stripes 1s linear infinite;
+      border-radius: inherit;
+    }
+
+    @keyframes move-stripes {
+      0% { background-position: 0 0; }
+      100% { background-position: 20px 0; }
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
+      line-height: 1.1;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      white-space: nowrap;
+      flex-shrink: 0;
+      min-width: max-content;
+    }
+
+    .status-badge::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .status-badge:hover::before {
+      left: 100%;
+    }
+
+    .status-high {
+      background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+      color: #22543d;
+      border: 1px solid #9ae6b4;
+    }
+
+    .status-medium {
+      background: linear-gradient(135deg, #fed7aa 0%, #fdba74 100%);
+      color: #9c4221;
+      border: 1px solid #fdba74;
+    }
+
+    .status-low {
+      background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
+      color: #7f1d1d;
+      border: 1px solid #fca5a5;
+    }
+
+    .status-meta {
+      background: #e6fffa;
+      color: #234e52;
+      border: 1px solid #81e6d9;
+    }
+
+    .status-indicator {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+      animation: pulse-dot 2s infinite;
+      flex-shrink: 0;
+    }
+
+    .status-indicator.dot-high { color: #22543d; }
+    .status-indicator.dot-medium { color: #9c4221; }
+    .status-indicator.dot-low { color: #7f1d1d; }
+    .status-indicator.dot-meta { color: #2c7a7b; }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .table-container tbody tr:hover .status-badge {
+      transform: scale(1.05);
+      box-shadow: 0 2px 8px rgba(13, 0, 71, 0.15);
+    }
+
+    .table-container tbody tr:hover .progress-container {
+      transform: scale(1.02);
+    }
+
+    .table-container tbody tr:hover .progress-bar {
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--ink-2);
+      padding: 30px 10px;
+      background: #f8fafc;
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+    }
+
+    @keyframes pop-in {
+      from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .sim-panel {
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+      }
+      .stats {
+        grid-template-columns: repeat(2, minmax(220px, 1fr));
+      }
+    }
+
+    @media (max-width: 740px) {
+      body {
+        padding: 10px;
+      }
+      .app {
+        padding: 10px;
+        border-radius: 14px;
+      }
+      .header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .header-actions {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        scrollbar-width: thin;
+      }
+      .header h1 {
+        font-size: 27px;
+      }
+      .sim-panel,
+      .stats,
+      .summary-row {
+        grid-template-columns: 1fr;
+      }
+      .stat-card {
+        padding: 12px;
+        gap: 10px;
+      }
+      .stat-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+      }
+      .stat-icon svg {
+        width: 20px;
+        height: 20px;
+      }
+      .stat-number {
+        font-size: 26px;
+      }
+      .ring-wrap {
+        width: 52px;
+        height: 52px;
+      }
+      .sim-config-grid.two,
+      .sim-config-grid.three {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .sim-config-footer {
+        justify-content: flex-start;
+      }
+      .search {
+        width: 100%;
+      }
+      .summary-row.modal-stats-summary {
+        gap: 0.65rem;
+        padding: 0.75rem 0.7rem 0.8rem;
+      }
+      .summary-row.modal-stats-summary .sum-box {
+        flex-basis: 168px;
+        min-width: 168px;
+        border-radius: 12px;
+        padding: 0.75rem 0.7rem;
+        min-height: 84px;
+      }
+      .summary-row.modal-stats-summary .modal-stat-label {
+        font-size: 0.64rem;
+      }
+      .summary-row.modal-stats-summary .modal-stat-value {
+        font-size: 1.2rem;
+      }
+      #detailModal .table-wrap {
+        margin: 0.7rem;
+        max-height: calc(92vh - 250px);
+      }
+      #detailModal .table-wrap th {
+        padding: 0.78rem 0.6rem;
+        font-size: 0.65rem;
+      }
+      #detailModal .table-wrap td {
+        padding: 0.72rem 0.6rem;
+        font-size: 0.74rem;
+      }
+      #detailModal .table-wrap tbody td:first-child {
+        padding-left: 1.45rem;
+      }
+      #detailModal .table-wrap tbody td:first-child::before {
+        left: 0.62rem;
+      }
+      .table-container {
+        border-radius: 12px;
+        padding: 0.7rem;
+      }
+      .table-header {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      .table-actions,
+      .search-box {
+        width: 100%;
+      }
+      .search-box input {
+        width: 100%;
+        font-size: 16px;
+      }
+      .table-container .table-wrapper {
+        border-radius: 10px;
+        max-height: 56vh;
+      }
+      .table-container th {
+        padding: 0.85rem 0.5rem;
+        font-size: 0.68rem;
+      }
+      .table-container td {
+        padding: 0.72rem 0.5rem;
+        font-size: 0.73rem;
+      }
+      .table-container .sort-icon {
+        width: 12px;
+        height: 12px;
+      }
+      .sector-cell-container {
+        padding: 0.3rem 0.45rem;
+      }
+      .sector-avatar {
+        width: 28px;
+        height: 28px;
+        font-size: 0.66rem;
+      }
+      .sector-name {
+        font-size: 0.76rem;
+      }
+      .sector-code {
+        font-size: 0.62rem;
+      }
+      .description-cell {
+        max-width: 120px;
+      }
+      .progress-container {
+        height: 20px;
+        min-width: 95px;
+      }
+      .progress-bar {
+        min-width: 0;
+      }
+      .progress-label {
+        font-size: 0.64rem;
+      }
+      .status-badge {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.6rem;
+        border-radius: 6px;
+      }
+      .chart-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .chart-sector-desc {
+        white-space: normal;
+      }
+      .chart-kpi {
+        justify-items: start;
+        text-align: left;
+      }
+      .chart-kpi-value {
+        font-size: 1.02rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <div>
+        <h1>Sincronismo</h1>
+        <p>Acompanhamento do sincronismo da Separacao por setor</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-light btn-config" id="configToggleBtn" aria-expanded="true" type="button">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="4" y1="6" x2="20" y2="6"></line>
+            <line x1="4" y1="12" x2="20" y2="12"></line>
+            <line x1="4" y1="18" x2="20" y2="18"></line>
+            <circle cx="9" cy="6" r="2"></circle>
+            <circle cx="15" cy="12" r="2"></circle>
+            <circle cx="7" cy="18" r="2"></circle>
+          </svg>
+          <span class="btn-label" id="configToggleLabel">Ocultar Config.</span>
+        </button>
+        <button class="btn btn-primary" id="chartBtn">Graficos</button>
+      </div>
+    </header>
+
+    <section class="sim-panel">
+      <div class="sim-box">
+        <div class="sim-label">Horario Simulado</div>
+        <div class="sim-value" id="simClock">D1 05:00</div>
+      </div>
+      <div class="sim-box">
+        <div class="sim-label">Velocidade</div>
+        <div class="sim-value" id="speedLabel">1h = 1min</div>
+      </div>
+      <div class="sim-box">
+        <div class="sim-label">Hora de Referencia</div>
+        <div class="sim-value" id="hourRef">05:00</div>
+      </div>
+      <div class="sim-box">
+        <div class="sim-label">Controles</div>
+        <div class="sim-actions">
+          <select id="speedSelect" aria-label="Velocidade">
+            <option value="60">1h de producao = 1min real</option>
+            <option value="30">1h de producao = 30s real</option>
+            <option value="10">1h de producao = 10s real</option>
+          </select>
+          <button class="btn btn-light" id="runPauseBtn">Pausar</button>
+          <button class="btn btn-danger" id="resetBtn">Reiniciar</button>
+        </div>
+      </div>
+      <div class="sim-box sim-config-box">
+        <div class="sim-label">Jornada de Trabalho</div>
+        <div class="sim-config-grid two">
+          <label>
+            Inicio
+            <input id="workStartInput" type="time" value="05:00">
+          </label>
+          <label>
+            Fim
+            <input id="workEndInput" type="time" value="14:00">
+          </label>
+        </div>
+        <div class="sim-helper status-run" id="shiftStatus">Em operacao</div>
+      </div>
+      <div class="sim-box sim-config-box">
+        <div class="sim-label">Horario de Almoco</div>
+        <div class="sim-config-grid two">
+          <label>
+            Inicio
+            <input id="lunchStartInput" type="time" value="11:30">
+          </label>
+          <label>
+            Fim
+            <input id="lunchEndInput" type="time" value="12:30">
+          </label>
+        </div>
+        <div class="sim-helper">Sem producao no intervalo.</div>
+      </div>
+      <div class="sim-box sim-config-box">
+        <div class="sim-label">Distribuicao da Demanda (%)</div>
+        <div class="sim-config-grid three">
+          <label>
+            Frac.
+            <input id="distFracInput" type="number" min="0" max="100" step="1" value="40">
+          </label>
+          <label>
+            Grossa
+            <input id="distGrossaInput" type="number" min="0" max="100" step="1" value="45">
+          </label>
+          <label>
+            ARM/20
+            <input id="distArmInput" type="number" min="0" max="100" step="1" value="15">
+          </label>
+        </div>
+        <div class="sim-config-footer">
+          <span class="sim-helper" id="distTotalLabel">Total: 100%</span>
+          <button class="btn btn-light btn-mini" id="applyDistBtn">Aplicar</button>
+        </div>
+      </div>
+      <div class="sim-box sim-config-box">
+        <div class="sim-label">Demanda por Setor (linhas)</div>
+        <div class="sim-config-grid two">
+          <label>
+            Setor
+            <select id="demandSectorSelect" aria-label="Setor para demanda"></select>
+          </label>
+          <label>
+            Demanda
+            <input id="demandValueInput" type="number" min="0" step="1" placeholder="Ex: 1200">
+          </label>
+        </div>
+        <div class="sim-config-footer">
+          <button class="btn btn-light btn-mini" id="applyDemandBtn">Salvar</button>
+          <button class="btn btn-light btn-mini" id="clearDemandBtn">Limpar</button>
+          <span class="sim-helper" id="demandStatus">Sem override</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats">
+      <article class="stat-card" data-detail="setores">
+        <div class="stat-icon stat-icon-primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-title">Total de Setores</div>
+          <div class="stat-number" id="kpiSetores">0</div>
+        </div>
+      </article>
+      <article class="stat-card" data-detail="separadas">
+        <div class="stat-icon stat-icon-success">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-title">Linhas Separadas</div>
+          <div class="stat-number" id="kpiSeparadas">0</div>
+        </div>
+      </article>
+      <article class="stat-card" data-detail="restantes">
+        <div class="stat-icon stat-icon-warning">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-title">Linhas Restantes</div>
+          <div class="stat-number" id="kpiRestantes">0</div>
+        </div>
+      </article>
+      <article class="stat-card" data-detail="progresso">
+        <div class="stat-icon stat-icon-info">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <circle cx="7.5" cy="7.5" r="1.5"></circle>
+            <circle cx="16.5" cy="16.5" r="1.5"></circle>
+            <path d="m7 17 10-10"></path>
+          </svg>
+        </div>
+        <div class="stat-content">
+          <div class="stat-title">% Concluido</div>
+          <div class="stat-number" id="kpiPct">0%</div>
+        </div>
+        <div class="ring-wrap" id="progressRing"><span id="ringText">0%</span></div>
+      </article>
+    </section>
+
+    <section class="table-container table-shell">
+      <div class="table-header table-head">
+        <div class="table-title">
+          <h2>Detalhes por Setor</h2>
+          <p>Modelo visual do sincronismo com dados ficticios simulados.</p>
+        </div>
+        <div class="table-actions">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <path d="m21 21-4.35-4.35"></path>
+            </svg>
+            <input class="search" id="searchInput" placeholder="Pesquisar setor ou descricao..." type="text">
+          </div>
+        </div>
+      </div>
+      <div class="table-wrapper table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th data-sort="setor">
+                <div class="th-content">
+                  <span>Setor</span>
+                  <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 9l4-4 4 4"></path>
+                    <path d="m16 15-4 4-4-4"></path>
+                  </svg>
+                </div>
+              </th>
+              <th data-sort="descricao">
+                <div class="th-content">
+                  <span>Descricao</span>
+                  <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 9l4-4 4 4"></path>
+                    <path d="m16 15-4 4-4-4"></path>
+                  </svg>
+                </div>
+              </th>
+              <th data-sort="separadas">
+                <div class="th-content">
+                  <span>Linhas Separadas</span>
+                  <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 9l4-4 4 4"></path>
+                    <path d="m16 15-4 4-4-4"></path>
+                  </svg>
+                </div>
+              </th>
+              <th data-sort="restantes">
+                <div class="th-content">
+                  <span>Linhas Restantes</span>
+                  <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 9l4-4 4 4"></path>
+                    <path d="m16 15-4 4-4-4"></path>
+                  </svg>
+                </div>
+              </th>
+              <th data-sort="containers_restantes">
+                <div class="th-content">
+                  <span>Containers Restantes</span>
+                  <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 9l4-4 4 4"></path>
+                    <path d="m16 15-4 4-4-4"></path>
+                  </svg>
+                </div>
+              </th>
+              <th data-sort="total">
+                <div class="th-content">
+                  <span>Linhas Totais</span>
+                  <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 9l4-4 4 4"></path>
+                    <path d="m16 15-4 4-4-4"></path>
+                  </svg>
+                </div>
+              </th>
+              <th data-sort="progresso">
+                <div class="th-content">
+                  <span>Progresso</span>
+                  <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 9l4-4 4 4"></path>
+                    <path d="m16 15-4 4-4-4"></path>
+                  </svg>
+                </div>
+              </th>
+              <th data-sort="linhas_h">
+                <div class="th-content">
+                  <span>Linhas/h</span>
+                  <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M8 9l4-4 4 4"></path>
+                    <path d="m16 15-4 4-4-4"></path>
+                  </svg>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="timestamp" id="timestamp"></div>
+  </div>
+
+  <div class="modal" id="detailModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h3 id="detailTitle">Detalhes</h3>
+          <p id="detailSubtitle">Resumo</p>
+        </div>
+        <button class="modal-close" id="closeDetail" aria-label="Fechar">x</button>
+      </div>
+      <div class="modal-body">
+        <div class="summary-row modal-stats-summary" id="detailSummary"></div>
+        <div class="table-wrap">
+          <table>
+            <thead id="detailThead"></thead>
+            <tbody id="detailTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="chartModal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div>
+          <h3>Progresso por Setor</h3>
+          <p>Comparativo visual por setor com progresso e linhas produzidas por hora.</p>
+        </div>
+        <button class="modal-close" id="closeChart" aria-label="Fechar">x</button>
+      </div>
+      <div class="modal-body">
+        <div class="chart-filters">
+          <button class="f-btn active" data-filter="todos">Todos</button>
+          <button class="f-btn" data-filter="fracionado">Fracionado</button>
+          <button class="f-btn" data-filter="carga-grossa">Carga Grossa</button>
+          <button class="f-btn" data-filter="arm-20">ARM e 20</button>
+        </div>
+        <div class="chart-list" id="chartList"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const SECTORS_BASE = [
+        { setor: "10", descricao: "10 FRAC.HIG./BELEZ./AER.", meta: 59 },
+        { setor: "11", descricao: "11 FRAC.HIG./BELEZ./TINT.", meta: 76 },
+        { setor: "12", descricao: "12 FRAC.CALCADOS", meta: 112 },
+        { setor: "13", descricao: "13 FRAC.MARTCOM/BOMBONIER", meta: 84 },
+        { setor: "14", descricao: "14 FRAC.ALIMENTOS/BEBIDAS", meta: 93 },
+        { setor: "15", descricao: "15 FRAC.PET", meta: 82 },
+        { setor: "20", descricao: "20 ARM. E 20", meta: 30 },
+        { setor: "21", descricao: "21 CARGA GROSSA", meta: 45 },
+        { setor: "39", descricao: "39 MOD.A", meta: 42 },
+        { setor: "44", descricao: "44 MOD.B", meta: 64 },
+        { setor: "50", descricao: "50 ARM. ESPECIAL", meta: 0 },
+        { setor: "52", descricao: "52 CARGA GROSSA 2", meta: 23 },
+        { setor: "53", descricao: "53 CARGA GROSSA 3", meta: 184 },
+        { setor: "58", descricao: "58 CARGA GROSSA 4", meta: 60 },
+        { setor: "60", descricao: "60 CARGA GROSSA 5", meta: 68 },
+        { setor: "ARMI-2", descricao: "ARMI-2 FRACIONADO", meta: 0 },
+        { setor: "ARMI-3", descricao: "ARMI-3 FRACIONADO", meta: 0 },
+        { setor: "ARMFRAC", descricao: "ARMFRAC FRACIONADO", meta: 0 },
+        { setor: "SETOR24", descricao: "SETOR24 APOIO", meta: 0 }
+      ];
+
+      const SIM_START_MINUTES = 5 * 60;
+
+      const state = {
+        sectors: [],
+        running: true,
+        timerId: null,
+        searchTerm: "",
+        sortKey: "setor",
+        sortDir: "asc",
+        startMinutesRef: SIM_START_MINUTES,
+        simulatedMinutes: SIM_START_MINUTES,
+        secondsPerProdHour: 60,
+        chartFilter: "todos",
+        config: {
+          workStartMin: 5 * 60,
+          workEndMin: 14 * 60,
+          lunchStartMin: 11 * 60 + 30,
+          lunchEndMin: 12 * 60 + 30,
+          distribution: {
+            fracionado: 40,
+            cargaGrossa: 45,
+            arm20: 15
+          },
+          demandOverrides: {}
+        }
+      };
+
+      const ui = {
+        kpiSetores: document.getElementById("kpiSetores"),
+        kpiSeparadas: document.getElementById("kpiSeparadas"),
+        kpiRestantes: document.getElementById("kpiRestantes"),
+        kpiPct: document.getElementById("kpiPct"),
+        tableBody: document.getElementById("tableBody"),
+        searchInput: document.getElementById("searchInput"),
+        timestamp: document.getElementById("timestamp"),
+        ring: document.getElementById("progressRing"),
+        ringText: document.getElementById("ringText"),
+        simPanel: document.querySelector(".sim-panel"),
+        configToggleBtn: document.getElementById("configToggleBtn"),
+        configToggleLabel: document.getElementById("configToggleLabel"),
+        simClock: document.getElementById("simClock"),
+        speedLabel: document.getElementById("speedLabel"),
+        hourRef: document.getElementById("hourRef"),
+        speedSelect: document.getElementById("speedSelect"),
+        runPauseBtn: document.getElementById("runPauseBtn"),
+        resetBtn: document.getElementById("resetBtn"),
+        shiftStatus: document.getElementById("shiftStatus"),
+        workStartInput: document.getElementById("workStartInput"),
+        workEndInput: document.getElementById("workEndInput"),
+        lunchStartInput: document.getElementById("lunchStartInput"),
+        lunchEndInput: document.getElementById("lunchEndInput"),
+        distFracInput: document.getElementById("distFracInput"),
+        distGrossaInput: document.getElementById("distGrossaInput"),
+        distArmInput: document.getElementById("distArmInput"),
+        distTotalLabel: document.getElementById("distTotalLabel"),
+        applyDistBtn: document.getElementById("applyDistBtn"),
+        demandSectorSelect: document.getElementById("demandSectorSelect"),
+        demandValueInput: document.getElementById("demandValueInput"),
+        applyDemandBtn: document.getElementById("applyDemandBtn"),
+        clearDemandBtn: document.getElementById("clearDemandBtn"),
+        demandStatus: document.getElementById("demandStatus"),
+        chartBtn: document.getElementById("chartBtn"),
+        chartModal: document.getElementById("chartModal"),
+        closeChart: document.getElementById("closeChart"),
+        chartList: document.getElementById("chartList"),
+        filterButtons: Array.from(document.querySelectorAll(".f-btn")),
+        detailModal: document.getElementById("detailModal"),
+        closeDetail: document.getElementById("closeDetail"),
+        detailTitle: document.getElementById("detailTitle"),
+        detailSubtitle: document.getElementById("detailSubtitle"),
+        detailSummary: document.getElementById("detailSummary"),
+        detailThead: document.getElementById("detailThead"),
+        detailTbody: document.getElementById("detailTbody"),
+        sortHeaders: Array.from(document.querySelectorAll("th[data-sort]")),
+        statCards: Array.from(document.querySelectorAll(".stat-card"))
+      };
+
+      const tableRowsBySector = new Map();
+      let renderFrameId = null;
+      const BADGE_STATUS_CLASSES = ["status-high", "status-medium", "status-low", "status-meta"];
+      const DOT_STATUS_CLASSES = ["dot-high", "dot-medium", "dot-low", "dot-meta"];
+
+      init();
+
+      function init() {
+        populateDemandSectorSelect();
+        syncConfigInputsFromState();
+        resetSimulation(true);
+        bindEvents();
+        setSimPanelCollapsed(false);
+        startTimer();
+      }
+
+      function bindEvents() {
+        ui.searchInput.addEventListener("input", (event) => {
+          state.searchTerm = (event.target.value || "").trim().toLowerCase();
+          renderAll();
+        });
+
+        ui.speedSelect.addEventListener("change", (event) => {
+          state.secondsPerProdHour = Number(event.target.value) || 60;
+          updateSpeedLabel();
+        });
+
+        ui.runPauseBtn.addEventListener("click", toggleRunPause);
+        ui.resetBtn.addEventListener("click", () => resetSimulation(false));
+        ui.configToggleBtn.addEventListener("click", toggleSimPanel);
+
+        ui.workStartInput.addEventListener("change", () => {
+          state.config.workStartMin = parseTimeToMinutes(ui.workStartInput.value, state.config.workStartMin);
+          requestRender();
+        });
+
+        ui.workEndInput.addEventListener("change", () => {
+          state.config.workEndMin = parseTimeToMinutes(ui.workEndInput.value, state.config.workEndMin);
+          requestRender();
+        });
+
+        ui.lunchStartInput.addEventListener("change", () => {
+          state.config.lunchStartMin = parseTimeToMinutes(ui.lunchStartInput.value, state.config.lunchStartMin);
+          requestRender();
+        });
+
+        ui.lunchEndInput.addEventListener("change", () => {
+          state.config.lunchEndMin = parseTimeToMinutes(ui.lunchEndInput.value, state.config.lunchEndMin);
+          requestRender();
+        });
+
+        ui.applyDistBtn.addEventListener("click", () => {
+          applyDistributionConfig();
+          resetSimulation(false);
+        });
+
+        [ui.distFracInput, ui.distGrossaInput, ui.distArmInput].forEach((input) => {
+          input.addEventListener("input", updateDistributionTotalLabel);
+        });
+
+        ui.applyDemandBtn.addEventListener("click", () => {
+          const setor = ui.demandSectorSelect.value;
+          const value = Math.max(0, Math.round(Number(ui.demandValueInput.value) || 0));
+          if (!setor || value <= 0) {
+            setConfigFeedback("Informe setor e demanda valida.");
+            return;
+          }
+          state.config.demandOverrides[setor] = value;
+          updateDemandStatus(setor);
+          resetSimulation(false);
+        });
+
+        ui.clearDemandBtn.addEventListener("click", () => {
+          const setor = ui.demandSectorSelect.value;
+          if (!setor) return;
+          delete state.config.demandOverrides[setor];
+          updateDemandStatus(setor);
+          resetSimulation(false);
+        });
+
+        ui.demandSectorSelect.addEventListener("change", () => {
+          updateDemandStatus(ui.demandSectorSelect.value);
+        });
+
+        ui.sortHeaders.forEach((header) => {
+          header.addEventListener("click", () => {
+            const key = header.dataset.sort;
+            if (state.sortKey === key) {
+              state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
+            } else {
+              state.sortKey = key;
+              state.sortDir = "asc";
+            }
+            renderAll();
+          });
+        });
+
+        ui.chartBtn.addEventListener("click", () => {
+          ui.chartModal.classList.add("show");
+          renderChart();
+        });
+
+        ui.closeChart.addEventListener("click", () => ui.chartModal.classList.remove("show"));
+        ui.chartModal.addEventListener("click", (event) => {
+          if (event.target === ui.chartModal) ui.chartModal.classList.remove("show");
+        });
+
+        ui.filterButtons.forEach((button) => {
+          button.addEventListener("click", () => {
+            ui.filterButtons.forEach((item) => item.classList.remove("active"));
+            button.classList.add("active");
+            state.chartFilter = button.dataset.filter;
+            renderChart();
+          });
+        });
+
+        ui.statCards.forEach((card) => {
+          card.addEventListener("click", () => {
+            const detailType = card.dataset.detail;
+            openDetailModal(detailType);
+          });
+        });
+
+        ui.closeDetail.addEventListener("click", () => ui.detailModal.classList.remove("show"));
+        ui.detailModal.addEventListener("click", (event) => {
+          if (event.target === ui.detailModal) ui.detailModal.classList.remove("show");
+        });
+
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") {
+            ui.chartModal.classList.remove("show");
+            ui.detailModal.classList.remove("show");
+          }
+        });
+      }
+
+      function toggleRunPause() {
+        state.running = !state.running;
+        ui.runPauseBtn.textContent = state.running ? "Pausar" : "Retomar";
+      }
+
+      function toggleSimPanel() {
+        const collapsed = !ui.simPanel.classList.contains("is-collapsed");
+        setSimPanelCollapsed(collapsed);
+      }
+
+      function setSimPanelCollapsed(collapsed) {
+        ui.simPanel.classList.toggle("is-collapsed", collapsed);
+        ui.configToggleLabel.textContent = collapsed ? "Expandir Config." : "Ocultar Config.";
+        ui.configToggleBtn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      }
+
+      function startTimer() {
+        if (state.timerId) clearInterval(state.timerId);
+        state.timerId = setInterval(onTick, 1000);
+      }
+
+      function onTick() {
+        if (!state.running) return;
+
+        const stepMinutes = 60 / state.secondsPerProdHour;
+        const previousHour = Math.floor(state.simulatedMinutes / 60);
+        state.simulatedMinutes += stepMinutes;
+        const currentHour = Math.floor(state.simulatedMinutes / 60);
+        const minuteOfDay = Math.floor(state.simulatedMinutes % (24 * 60));
+        const productionActive = isProductionWindow(minuteOfDay);
+
+        if (productionActive) {
+          state.sectors.forEach((sector) => {
+            if (sector.linhasSeparadas >= sector.linhasTotais) return;
+
+            const fluctuation = rand(0.84, 1.16);
+            const produced = sector.metaSimulada * sector.ritmo * fluctuation * (stepMinutes / 60);
+            const available = sector.linhasTotais - sector.linhasSeparadas;
+            const used = Math.min(produced, available);
+
+            sector.linhasSeparadas += used;
+            sector.producaoHoraAtual += used;
+            sector.ritmo = clamp(sector.ritmo + rand(-0.015, 0.015), 0.70, 1.25);
+            syncDerived(sector);
+          });
+        }
+
+        if (currentHour !== previousHour) {
+          state.sectors.forEach((sector) => {
+            sector.producaoHoraAnterior = sector.producaoHoraAtual;
+            sector.producaoHoraAtual = 0;
+            sector.statusMeta = classifyMeta(sector);
+          });
+        }
+
+        requestRender();
+      }
+
+      function resetSimulation(firstLoad) {
+        state.startMinutesRef = state.config.workStartMin;
+        state.simulatedMinutes = state.startMinutesRef;
+        state.running = true;
+        ui.runPauseBtn.textContent = "Pausar";
+        state.sectors = buildFakeData();
+        updateDistributionTotalLabel();
+        updateDemandStatus(ui.demandSectorSelect.value);
+        updateSpeedLabel();
+        renderAll();
+
+        if (!firstLoad) {
+          flashReset();
+        }
+      }
+
+      function flashReset() {
+        ui.timestamp.textContent = "Simulacao reiniciada com novos dados ficticios.";
+        setTimeout(() => renderTimestamp(), 800);
+      }
+
+      function populateDemandSectorSelect() {
+        ui.demandSectorSelect.innerHTML = SECTORS_BASE.map((base) =>
+          `<option value="${escapeHtml(base.setor)}">${escapeHtml(base.setor)} - ${escapeHtml(base.descricao)}</option>`
+        ).join("");
+
+        if (!ui.demandSectorSelect.value && SECTORS_BASE.length) {
+          ui.demandSectorSelect.value = SECTORS_BASE[0].setor;
+        }
+      }
+
+      function syncConfigInputsFromState() {
+        ui.workStartInput.value = formatMinutesToTime(state.config.workStartMin);
+        ui.workEndInput.value = formatMinutesToTime(state.config.workEndMin);
+        ui.lunchStartInput.value = formatMinutesToTime(state.config.lunchStartMin);
+        ui.lunchEndInput.value = formatMinutesToTime(state.config.lunchEndMin);
+        ui.distFracInput.value = String(state.config.distribution.fracionado);
+        ui.distGrossaInput.value = String(state.config.distribution.cargaGrossa);
+        ui.distArmInput.value = String(state.config.distribution.arm20);
+        updateDistributionTotalLabel();
+        updateDemandStatus(ui.demandSectorSelect.value);
+      }
+
+      function applyDistributionConfig() {
+        const normalized = normalizeDistributionValues([
+          Number(ui.distFracInput.value),
+          Number(ui.distGrossaInput.value),
+          Number(ui.distArmInput.value)
+        ]);
+
+        state.config.distribution.fracionado = normalized[0];
+        state.config.distribution.cargaGrossa = normalized[1];
+        state.config.distribution.arm20 = normalized[2];
+
+        ui.distFracInput.value = String(normalized[0]);
+        ui.distGrossaInput.value = String(normalized[1]);
+        ui.distArmInput.value = String(normalized[2]);
+        updateDistributionTotalLabel();
+        setConfigFeedback("Distribuicao de demanda aplicada.");
+      }
+
+      function normalizeDistributionValues(rawValues) {
+        const safe = rawValues.map((value) => clamp(Math.round(Number(value) || 0), 0, 100));
+        const total = safe.reduce((sum, value) => sum + value, 0);
+        if (total <= 0) return [40, 45, 15];
+
+        const normalized = safe.map((value) => Math.round((value / total) * 100));
+        const diff = 100 - normalized.reduce((sum, value) => sum + value, 0);
+        normalized[0] = clamp(normalized[0] + diff, 0, 100);
+        return normalized;
+      }
+
+      function updateDistributionTotalLabel() {
+        const total = Number(ui.distFracInput.value || 0)
+          + Number(ui.distGrossaInput.value || 0)
+          + Number(ui.distArmInput.value || 0);
+
+        ui.distTotalLabel.textContent = `Total: ${total}%`;
+        ui.distTotalLabel.classList.remove("status-run", "status-break");
+        ui.distTotalLabel.classList.add(total === 100 ? "status-run" : "status-break");
+      }
+
+      function updateDemandStatus(setor) {
+        const key = setor || ui.demandSectorSelect.value;
+        const override = Number(state.config.demandOverrides[key] || 0);
+        ui.demandValueInput.value = override > 0 ? String(override) : "";
+        ui.demandStatus.textContent = override > 0
+          ? `Override ativo: ${fmtInt(override)} linhas`
+          : "Sem override";
+        ui.demandStatus.classList.remove("status-run", "status-off");
+        ui.demandStatus.classList.add(override > 0 ? "status-run" : "status-off");
+      }
+
+      function setConfigFeedback(message) {
+        ui.timestamp.textContent = message;
+        setTimeout(() => renderTimestamp(), 1200);
+      }
+
+      function parseTimeToMinutes(rawValue, fallback) {
+        if (!rawValue || !rawValue.includes(":")) return fallback;
+        const [hourRaw, minuteRaw] = rawValue.split(":");
+        const hour = Number(hourRaw);
+        const minute = Number(minuteRaw);
+        if (Number.isNaN(hour) || Number.isNaN(minute)) return fallback;
+        return clamp(hour, 0, 23) * 60 + clamp(minute, 0, 59);
+      }
+
+      function formatMinutesToTime(totalMinutes) {
+        const safeMinutes = ((Math.round(totalMinutes) % (24 * 60)) + (24 * 60)) % (24 * 60);
+        const hour = Math.floor(safeMinutes / 60);
+        const minute = safeMinutes % 60;
+        return `${pad2(hour)}:${pad2(minute)}`;
+      }
+
+      function isTimeInRange(currentMinute, startMinute, endMinute) {
+        if (startMinute === endMinute) return true;
+        if (startMinute < endMinute) {
+          return currentMinute >= startMinute && currentMinute < endMinute;
+        }
+        return currentMinute >= startMinute || currentMinute < endMinute;
+      }
+
+      function isProductionWindow(minuteOfDay) {
+        const inWork = isTimeInRange(minuteOfDay, state.config.workStartMin, state.config.workEndMin);
+        if (!inWork) return false;
+        const inLunch = isTimeInRange(minuteOfDay, state.config.lunchStartMin, state.config.lunchEndMin);
+        return !inLunch;
+      }
+
+      function getOperationState(minuteOfDay) {
+        const inWork = isTimeInRange(minuteOfDay, state.config.workStartMin, state.config.workEndMin);
+        if (!inWork) return { label: "Fora da jornada", className: "status-off" };
+        const inLunch = isTimeInRange(minuteOfDay, state.config.lunchStartMin, state.config.lunchEndMin);
+        if (inLunch) return { label: "Em almoco", className: "status-break" };
+        return { label: "Em operacao", className: "status-run" };
+      }
+
+      function getDistributionCategoryKey(setor) {
+        const category = categorizeSector(setor);
+        if (category === "fracionado") return "fracionado";
+        if (category === "carga-grossa") return "cargaGrossa";
+        if (category === "arm-20") return "arm20";
+        return null;
+      }
+
+      function buildFakeData() {
+        const draft = SECTORS_BASE.map((base) => {
+          const metaSimulada = base.meta > 0 ? base.meta : randInt(26, 48);
+          const baseLinhas = Math.max(120, Math.round(metaSimulada * rand(8.2, 12.8)));
+          return {
+            setor: base.setor,
+            descricao: base.descricao,
+            meta: base.meta,
+            metaSimulada,
+            ritmo: rand(0.86, 1.10),
+            linhasTotais: baseLinhas
+          };
+        });
+
+        const grouped = {
+          fracionado: [],
+          cargaGrossa: [],
+          arm20: []
+        };
+
+        let adjustableTotal = 0;
+
+        draft.forEach((item) => {
+          const overrideValue = Number(state.config.demandOverrides[item.setor] || 0);
+          if (overrideValue > 0) {
+            item.linhasTotais = Math.max(20, Math.round(overrideValue));
+            return;
+          }
+
+          const categoryKey = getDistributionCategoryKey(item.setor);
+          if (!categoryKey) return;
+
+          grouped[categoryKey].push(item);
+          adjustableTotal += item.linhasTotais;
+        });
+
+        if (adjustableTotal > 0) {
+          const targets = state.config.distribution;
+          ["fracionado", "cargaGrossa", "arm20"].forEach((categoryKey) => {
+            const categoryItems = grouped[categoryKey];
+            if (!categoryItems.length) return;
+            const currentTotal = categoryItems.reduce((sum, item) => sum + item.linhasTotais, 0);
+            const targetTotal = adjustableTotal * (targets[categoryKey] / 100);
+            const factor = currentTotal > 0 ? (targetTotal / currentTotal) : 1;
+            categoryItems.forEach((item) => {
+              item.linhasTotais = Math.max(20, Math.round(item.linhasTotais * factor));
+            });
+          });
+        }
+
+        return draft.map((item) => {
+          const linhasTotais = Math.max(20, Math.round(item.linhasTotais));
+          const containersTotais = Math.max(6, Math.round(linhasTotais * rand(0.20, 0.36)));
+          const itensTotais = Math.max(120, Math.round(linhasTotais * rand(5.2, 9.1)));
+          const pesoPrevisto = round2(linhasTotais * rand(0.85, 3.10));
+
+          return {
+            setor: item.setor,
+            descricao: item.descricao,
+            meta: item.meta,
+            metaSimulada: item.metaSimulada,
+            ritmo: item.ritmo,
+            linhasTotais,
+            linhasSeparadas: 0,
+            linhasRestantes: linhasTotais,
+            containersTotais,
+            containersSeparados: 0,
+            containersRestantes: containersTotais,
+            itensTotais,
+            itensSeparados: 0,
+            itensRestantes: itensTotais,
+            pesoPrevisto,
+            pesoSeparado: 0,
+            pesoRestante: pesoPrevisto,
+            progresso: 0,
+            prioridade: "Alta",
+            producaoHoraAtual: 0,
+            producaoHoraAnterior: 0,
+            statusMeta: {
+              label: "Sem dados",
+              chipClass: "c-neutral"
+            }
+          };
+        });
+      }
+
+      function syncDerived(sector) {
+        sector.linhasRestantes = Math.max(0, sector.linhasTotais - sector.linhasSeparadas);
+        sector.progresso = sector.linhasTotais > 0 ? (sector.linhasSeparadas / sector.linhasTotais) * 100 : 0;
+
+        sector.containersSeparados = Math.min(
+          sector.containersTotais,
+          Math.round((sector.progresso / 100) * sector.containersTotais)
+        );
+        sector.containersRestantes = Math.max(0, sector.containersTotais - sector.containersSeparados);
+
+        sector.itensSeparados = Math.min(
+          sector.itensTotais,
+          Math.round((sector.progresso / 100) * sector.itensTotais)
+        );
+        sector.itensRestantes = Math.max(0, sector.itensTotais - sector.itensSeparados);
+
+        sector.pesoSeparado = round2((sector.progresso / 100) * sector.pesoPrevisto);
+        sector.pesoRestante = round2(Math.max(0, sector.pesoPrevisto - sector.pesoSeparado));
+
+        const remainRatio = sector.linhasTotais > 0 ? sector.linhasRestantes / sector.linhasTotais : 0;
+        if (sector.linhasRestantes === 0) sector.prioridade = "Concluido";
+        else if (remainRatio >= 0.50) sector.prioridade = "Alta";
+        else if (remainRatio >= 0.20) sector.prioridade = "Media";
+        else sector.prioridade = "Baixa";
+      }
+
+      function classifyMeta(sector) {
+        if (sector.meta <= 0) {
+          return { label: "Sem meta", chipClass: "c-neutral" };
+        }
+
+        const rate = (sector.producaoHoraAnterior / sector.meta) * 100;
+        if (rate >= 110) return { label: "Excelente", chipClass: "c-ok" };
+        if (rate >= 90) return { label: "Bom", chipClass: "c-good" };
+        if (rate >= 70) return { label: "Ruim", chipClass: "c-warn" };
+        return { label: "Pessimo", chipClass: "c-bad" };
+      }
+
+      function getVisibleSectors() {
+        let list = [...state.sectors];
+        if (state.searchTerm) {
+          list = list.filter((sector) => {
+            const sectorText = `${sector.setor} ${sector.descricao}`.toLowerCase();
+            return sectorText.includes(state.searchTerm);
+          });
+        }
+        sortSectors(list);
+        return list;
+      }
+
+      function sortSectors(list) {
+        const dir = state.sortDir === "asc" ? 1 : -1;
+        const key = state.sortKey;
+        list.sort((a, b) => {
+          const va = getSortValue(a, key);
+          const vb = getSortValue(b, key);
+          if (typeof va === "string" || typeof vb === "string") {
+            return String(va).localeCompare(String(vb), "pt-BR", { numeric: true }) * dir;
+          }
+          return (Number(va) - Number(vb)) * dir;
+        });
+      }
+
+      function getSortValue(sector, key) {
+        switch (key) {
+          case "setor":
+            return sector.setor;
+          case "descricao":
+            return sector.descricao;
+          case "separadas":
+            return sector.linhasSeparadas;
+          case "restantes":
+            return sector.linhasRestantes;
+          case "containers_restantes":
+            return sector.containersRestantes;
+          case "total":
+            return sector.linhasTotais;
+          case "progresso":
+            return sector.progresso;
+          case "linhas_h":
+            return getAverageLinesPerHour(sector);
+          default:
+            return sector.setor;
+        }
+      }
+
+      function getElapsedSimulationHours() {
+        return Math.max((state.simulatedMinutes - state.startMinutesRef) / 60, 0);
+      }
+
+      function getAverageLinesPerHour(sector) {
+        const elapsedHours = getElapsedSimulationHours();
+        if (elapsedHours <= 0) return 0;
+        return sector.linhasSeparadas / elapsedHours;
+      }
+
+      function requestRender() {
+        if (renderFrameId !== null) return;
+        renderFrameId = requestAnimationFrame(() => {
+          renderFrameId = null;
+          renderAll();
+        });
+      }
+
+      function renderAll() {
+        const visible = getVisibleSectors();
+        renderKPIs(visible);
+        renderMainTable(visible);
+        renderTimestamp();
+        renderClock();
+        renderSortStates();
+
+        if (ui.chartModal.classList.contains("show")) renderChart();
+        if (ui.detailModal.classList.contains("show") && ui.detailModal.dataset.mode) {
+          openDetailModal(ui.detailModal.dataset.mode, true);
+        }
+      }
+
+      function renderKPIs(visible) {
+        const totalSetores = visible.length;
+        const linhasSeparadas = visible.reduce((sum, item) => sum + item.linhasSeparadas, 0);
+        const linhasRestantes = visible.reduce((sum, item) => sum + item.linhasRestantes, 0);
+        const total = linhasSeparadas + linhasRestantes;
+        const pct = total > 0 ? (linhasSeparadas / total) * 100 : 0;
+
+        ui.kpiSetores.textContent = fmtInt(totalSetores);
+        ui.kpiSeparadas.textContent = fmtInt(linhasSeparadas);
+        ui.kpiRestantes.textContent = fmtInt(linhasRestantes);
+        ui.kpiPct.textContent = fmtPct(pct);
+        ui.ring.style.setProperty("--pct", String(clamp(pct, 0, 100)));
+        ui.ringText.textContent = `${Math.round(pct)}%`;
+      }
+
+      function renderMainTable(visible) {
+        if (!visible.length) {
+          ui.tableBody.innerHTML = `
+            <tr class="empty-row">
+              <td colspan="8" class="empty">Nenhum setor encontrado para o filtro aplicado.</td>
+            </tr>
+          `;
+          return;
+        }
+
+        const emptyRow = ui.tableBody.querySelector(".empty-row");
+        if (emptyRow) emptyRow.remove();
+
+        const visibleKeys = new Set(visible.map((sector) => sector.setor));
+
+        Array.from(ui.tableBody.querySelectorAll("tr[data-sector-key]")).forEach((row) => {
+          if (!visibleKeys.has(row.dataset.sectorKey)) row.remove();
+        });
+
+        visible.forEach((sector, index) => {
+          let row = tableRowsBySector.get(sector.setor);
+          if (!row) {
+            row = createMainTableRow(sector.setor);
+            tableRowsBySector.set(sector.setor, row);
+          }
+
+          updateMainTableRow(row, sector);
+
+          const currentRowAtIndex = ui.tableBody.children[index];
+          if (currentRowAtIndex !== row) {
+            ui.tableBody.insertBefore(row, currentRowAtIndex || null);
+          }
+        });
+      }
+
+      function createMainTableRow(sectorKey) {
+        const row = document.createElement("tr");
+        row.dataset.sectorKey = sectorKey;
+        row.innerHTML = `
+          <td class="sector-cell">
+            <div class="sector-cell-container">
+              <div class="sector-avatar" data-role="avatar"></div>
+              <div>
+                <div class="sector-name" data-role="sector-name"></div>
+                <div class="sector-code" data-role="sector-code"></div>
+              </div>
+            </div>
+          </td>
+          <td class="description-cell" data-role="description"></td>
+          <td class="number-cell text-success">
+            <div class="cell-inline">
+              <span data-role="separadas"></span>
+              <span class="status-badge status-high"><span class="status-indicator"></span></span>
+            </div>
+          </td>
+          <td class="number-cell text-danger">
+            <div class="cell-inline">
+              <span data-role="restantes"></span>
+              <span class="status-badge" data-role="restantes-badge"><span class="status-indicator"></span></span>
+            </div>
+          </td>
+          <td class="number-cell text-warning">
+            <div class="cell-inline">
+              <span data-role="containers"></span>
+              <span class="status-badge" data-role="containers-badge"><span class="status-indicator"></span></span>
+            </div>
+          </td>
+          <td class="number-cell" data-role="totais"></td>
+          <td>
+            <div class="progress-cell">
+              <div class="progress-container">
+                <div class="progress-bar" data-role="progress-bar"></div>
+                <span class="progress-label" data-role="progress-label"></span>
+              </div>
+              <span class="status-badge" data-role="progress-status-badge">
+                <span class="status-indicator"></span><span data-role="progress-status-text"></span>
+              </span>
+            </div>
+          </td>
+          <td class="number-cell">
+            <div class="cell-inline end">
+              <span data-role="linhas-h"></span>
+              <span class="status-indicator" data-role="linhas-h-dot"></span>
+            </div>
+          </td>
+        `;
+
+        row._refs = {
+          avatar: row.querySelector("[data-role='avatar']"),
+          sectorName: row.querySelector("[data-role='sector-name']"),
+          sectorCode: row.querySelector("[data-role='sector-code']"),
+          description: row.querySelector("[data-role='description']"),
+          separadas: row.querySelector("[data-role='separadas']"),
+          restantes: row.querySelector("[data-role='restantes']"),
+          restantesBadge: row.querySelector("[data-role='restantes-badge']"),
+          containers: row.querySelector("[data-role='containers']"),
+          containersBadge: row.querySelector("[data-role='containers-badge']"),
+          totais: row.querySelector("[data-role='totais']"),
+          progressBar: row.querySelector("[data-role='progress-bar']"),
+          progressLabel: row.querySelector("[data-role='progress-label']"),
+          progressStatusBadge: row.querySelector("[data-role='progress-status-badge']"),
+          progressStatusText: row.querySelector("[data-role='progress-status-text']"),
+          linhasHora: row.querySelector("[data-role='linhas-h']"),
+          linhasHoraDot: row.querySelector("[data-role='linhas-h-dot']")
+        };
+
+        return row;
+      }
+
+      function updateMainTableRow(row, sector) {
+        const refs = row._refs;
+        const pct = clamp(sector.progresso, 0, 100);
+        const linhasHoraMedia = getAverageLinesPerHour(sector);
+        const avatar = sector.setor.replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase() || "SR";
+
+        let corBarra = "#e53e3e";
+        let statusClass = "status-low";
+        let statusText = "Atencao";
+        if (pct >= 80) {
+          corBarra = "#38a169";
+          statusClass = "status-high";
+          statusText = "Excelente";
+        } else if (pct >= 50) {
+          corBarra = "#ed8936";
+          statusClass = "status-medium";
+          statusText = "Bom";
+        }
+
+        let metaDotClass = "dot-meta";
+        if (sector.statusMeta.label === "Excelente") metaDotClass = "dot-high";
+        else if (sector.statusMeta.label === "Bom") metaDotClass = "dot-medium";
+        else if (sector.statusMeta.label === "Ruim" || sector.statusMeta.label === "Pessimo") metaDotClass = "dot-low";
+
+        refs.avatar.textContent = avatar;
+        refs.sectorName.textContent = sector.setor;
+        refs.sectorCode.textContent = `Setor ${sector.setor}`;
+        refs.description.textContent = sector.descricao;
+        refs.description.title = sector.descricao;
+        refs.separadas.textContent = fmtInt(sector.linhasSeparadas);
+        refs.restantes.textContent = fmtInt(sector.linhasRestantes);
+        refs.containers.textContent = fmtInt(sector.containersRestantes);
+        refs.totais.textContent = fmtInt(sector.linhasTotais);
+
+        setStatusBadgeClass(refs.restantesBadge, sector.linhasRestantes > 0 ? "status-low" : "status-high");
+        setStatusBadgeClass(refs.containersBadge, sector.containersRestantes > 0 ? "status-medium" : "status-high");
+        setStatusBadgeClass(refs.progressStatusBadge, statusClass);
+
+        refs.progressBar.style.width = `${pct.toFixed(1)}%`;
+        refs.progressBar.style.backgroundColor = corBarra;
+        refs.progressLabel.textContent = fmtPct(pct);
+        refs.progressLabel.classList.toggle("light", pct >= 45);
+        refs.progressLabel.classList.toggle("dark", pct < 45);
+        refs.progressStatusText.textContent = statusText;
+
+        refs.linhasHora.textContent = `${fmtInt(linhasHoraMedia)} l/h`;
+        refs.linhasHoraDot.title = sector.statusMeta.label;
+        setStatusDotClass(refs.linhasHoraDot, metaDotClass);
+      }
+
+      function setStatusBadgeClass(element, statusClass) {
+        element.classList.remove(...BADGE_STATUS_CLASSES);
+        element.classList.add("status-badge", statusClass);
+      }
+
+      function setStatusDotClass(element, dotClass) {
+        element.classList.remove(...DOT_STATUS_CLASSES);
+        element.classList.add(dotClass);
+      }
+
+      function renderSortStates() {
+        ui.sortHeaders.forEach((header) => {
+          const isActive = header.dataset.sort === state.sortKey;
+          header.classList.toggle("sort-active", isActive);
+          header.classList.toggle("sorted", isActive);
+          header.classList.remove("sorted-asc", "sorted-desc");
+          if (isActive) {
+            header.classList.add(state.sortDir === "asc" ? "sorted-asc" : "sorted-desc");
+          }
+        });
+      }
+
+      function renderTimestamp() {
+        const now = new Date();
+        const time = now.toLocaleTimeString("pt-BR");
+        ui.timestamp.textContent =
+          `Atualizado: ${time} | Simulacao local com dados ficticios.`;
+      }
+
+      function renderClock() {
+        ui.simClock.textContent = formatSimulatedClock(state.simulatedMinutes);
+        ui.hourRef.textContent = `${pad2(Math.floor(state.simulatedMinutes / 60) % 24)}:00`;
+        const minuteOfDay = Math.floor(state.simulatedMinutes % (24 * 60));
+        const operation = getOperationState(minuteOfDay);
+        ui.shiftStatus.textContent = operation.label;
+        ui.shiftStatus.classList.remove("status-run", "status-break", "status-off");
+        ui.shiftStatus.classList.add(operation.className);
+      }
+
+      function updateSpeedLabel() {
+        const sec = state.secondsPerProdHour;
+        ui.speedLabel.textContent = sec === 60 ? "1h = 1min" : `1h = ${sec}s`;
+      }
+
+      function openDetailModal(mode, keepOpen) {
+        ui.detailModal.dataset.mode = mode;
+        const list = [...state.sectors];
+
+        let title = "Detalhes";
+        let subtitle = "";
+        let headers = [];
+        let rows = [];
+        let summary = [];
+
+        if (mode === "setores") {
+          title = "Detalhes dos Setores";
+          subtitle = "Visao geral de totais por setor.";
+          headers = ["Setor", "Descricao", "Linhas Totais", "Containers", "Itens", "Peso Previsto"];
+          rows = list.map((sector) => [
+            sector.setor,
+            sector.descricao,
+            fmtInt(sector.linhasTotais),
+            fmtInt(sector.containersTotais),
+            fmtInt(sector.itensTotais),
+            fmtKg(sector.pesoPrevisto)
+          ]);
+          summary = [
+            ["Total de Setores", fmtInt(list.length)],
+            ["Total Linhas", fmtInt(sum(list, "linhasTotais"))],
+            ["Total Containers", fmtInt(sum(list, "containersTotais"))],
+            ["Peso Previsto", fmtKg(sum(list, "pesoPrevisto"))]
+          ];
+        } else if (mode === "separadas") {
+          title = "Linhas Separadas por Setor";
+          subtitle = "Producao ja separada na simulacao.";
+          headers = ["Setor", "Descricao", "Linhas Separadas", "Peso Separado", "Containers Sep.", "Itens Sep."];
+          rows = list.map((sector) => [
+            sector.setor,
+            sector.descricao,
+            fmtInt(sector.linhasSeparadas),
+            fmtKg(sector.pesoSeparado),
+            fmtInt(sector.containersSeparados),
+            fmtInt(sector.itensSeparados)
+          ]);
+          summary = [
+            ["Linhas Separadas", fmtInt(sum(list, "linhasSeparadas"))],
+            ["Peso Separado", fmtKg(sum(list, "pesoSeparado"))],
+            ["Containers Sep.", fmtInt(sum(list, "containersSeparados"))],
+            ["Itens Sep.", fmtInt(sum(list, "itensSeparados"))]
+          ];
+        } else if (mode === "restantes") {
+          title = "Linhas Restantes por Setor";
+          subtitle = "Volume pendente e prioridade de ataque.";
+          headers = ["Setor", "Descricao", "Linhas Restantes", "Peso Restante", "Containers Rest.", "Itens Rest.", "Prioridade"];
+          rows = list.map((sector) => [
+            sector.setor,
+            sector.descricao,
+            fmtInt(sector.linhasRestantes),
+            fmtKg(sector.pesoRestante),
+            fmtInt(sector.containersRestantes),
+            fmtInt(sector.itensRestantes),
+            sector.prioridade
+          ]);
+          summary = [
+            ["Setores Pendentes", fmtInt(list.filter((sector) => sector.linhasRestantes > 0).length)],
+            ["Linhas Restantes", fmtInt(sum(list, "linhasRestantes"))],
+            ["Containers Rest.", fmtInt(sum(list, "containersRestantes"))],
+            ["Itens Rest.", fmtInt(sum(list, "itensRestantes"))]
+          ];
+        } else if (mode === "progresso") {
+          title = "Progresso por Setor";
+          subtitle = "Media de linhas realizadas por hora e desempenho por status.";
+          headers = ["Setor", "Descricao", "Progresso", "Linhas/h", "Ult. Hora", "Status"];
+          rows = list.map((sector) => [
+            sector.setor,
+            sector.descricao,
+            fmtPct(sector.progresso),
+            `${fmtInt(getAverageLinesPerHour(sector))} l/h`,
+            fmtInt(sector.producaoHoraAnterior),
+            sector.statusMeta.label
+          ]);
+          summary = [
+            ["Progresso Geral", fmtPct((sum(list, "linhasSeparadas") / Math.max(1, sum(list, "linhasTotais"))) * 100)],
+            ["Setores Concluidos", fmtInt(list.filter((sector) => sector.linhasRestantes <= 0).length)],
+            ["Media Linhas/h", `${fmtInt(sum(list, "linhasSeparadas") / Math.max(1 / 60, getElapsedSimulationHours()))} l/h`],
+            ["Media Ult. Hora", fmtInt(sum(list, "producaoHoraAnterior") / Math.max(1, list.length))],
+            ["Horario Simulado", formatSimulatedClock(state.simulatedMinutes)]
+          ];
+        }
+
+        ui.detailTitle.textContent = title;
+        ui.detailSubtitle.textContent = subtitle;
+        const primarySummaryIndex = mode === "setores" ? 0 : -1;
+
+        ui.detailSummary.innerHTML = summary.map((item, index) => `
+          <div class="sum-box modal-stat ${index === primarySummaryIndex ? "modal-stat-primary" : ""}">
+            <span class="modal-stat-label">${escapeHtml(String(item[0]))}</span>
+            <span class="modal-stat-value">${escapeHtml(String(item[1]))}</span>
+          </div>
+        `).join("");
+
+        ui.detailThead.innerHTML = `<tr>${headers.map((item) => `<th>${item}</th>`).join("")}</tr>`;
+        ui.detailTbody.innerHTML = rows.map((row) => `
+          <tr>${row.map((cell) => `<td>${escapeHtml(String(cell))}</td>`).join("")}</tr>
+        `).join("");
+
+        if (!keepOpen) ui.detailModal.classList.add("show");
+      }
+
+      function renderChart() {
+        let list = [...state.sectors];
+
+        if (state.chartFilter !== "todos") {
+          list = list.filter((sector) => categorizeSector(sector.setor) === state.chartFilter);
+        }
+
+        sortSectorsByProgress(list);
+        if (!list.length) {
+          ui.chartList.innerHTML = `<div class="empty">Nenhum setor para o filtro selecionado.</div>`;
+          return;
+        }
+
+        ui.chartList.innerHTML = list.map((sector) => {
+          const pct = clamp(sector.progresso, 0, 100);
+          const linhasHora = getAverageLinesPerHour(sector);
+          const groupLabel = getChartGroupLabel(categorizeSector(sector.setor));
+
+          return `
+            <div class="chart-row">
+              <div class="chart-sector">
+                <div class="chart-sector-top">
+                  <span class="chart-sector-code">${escapeHtml(sector.setor)}</span>
+                  <span class="chart-sector-tag">${escapeHtml(groupLabel)}</span>
+                </div>
+                <div class="chart-sector-desc">${escapeHtml(sector.descricao)}</div>
+              </div>
+              <div class="chart-progress">
+                <div class="chart-progress-head">
+                  <span>${fmtInt(sector.linhasSeparadas)} / ${fmtInt(sector.linhasTotais)} linhas</span>
+                  <span>${fmtPct(pct)}</span>
+                </div>
+                <div class="chart-track"><i style="width:${pct.toFixed(2)}%"></i></div>
+              </div>
+              <div class="chart-kpi">
+                <span class="chart-kpi-value">${fmtInt(linhasHora)}</span>
+                <span class="chart-kpi-label">Linhas/h</span>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      function getChartGroupLabel(categoryKey) {
+        if (categoryKey === "fracionado") return "Fracionado";
+        if (categoryKey === "carga-grossa") return "Carga Grossa";
+        if (categoryKey === "arm-20") return "ARM/20";
+        return "Outros";
+      }
+
+      function sortSectorsByProgress(list) {
+        list.sort((a, b) => b.progresso - a.progresso);
+      }
+
+      function categorizeSector(setor) {
+        const arm = ["ARMI-2", "ARMI-3", "ARMFRAC", "SETOR24", "20"];
+        const fracionado = ["10", "11", "12", "13", "14", "15"];
+        const grossa = ["21", "39", "44", "50", "52", "53", "58", "60"];
+
+        if (arm.includes(setor)) return "arm-20";
+        if (fracionado.includes(setor)) return "fracionado";
+        if (grossa.includes(setor)) return "carga-grossa";
+        return "todos";
+      }
+
+      function sum(list, key) {
+        return list.reduce((acc, item) => acc + Number(item[key] || 0), 0);
+      }
+
+      function rand(min, max) {
+        return Math.random() * (max - min) + min;
+      }
+
+      function randInt(min, max) {
+        return Math.floor(rand(min, max + 1));
+      }
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function round2(value) {
+        return Math.round(value * 100) / 100;
+      }
+
+      function fmtInt(value) {
+        return Math.round(value).toLocaleString("pt-BR");
+      }
+
+      function fmtPct(value) {
+        return `${value.toFixed(1).replace(".", ",")}%`;
+      }
+
+      function fmtKg(value) {
+        return `${value.toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })} kg`;
+      }
+
+      function pad2(value) {
+        return String(value).padStart(2, "0");
+      }
+
+      function formatSimulatedClock(totalMinutes) {
+        const day = Math.floor(totalMinutes / (24 * 60)) + 1;
+        const hour = Math.floor(totalMinutes / 60) % 24;
+        const minute = Math.floor(totalMinutes % 60);
+        return `D${day} ${pad2(hour)}:${pad2(minute)}`;
+      }
+
+      function escapeHtml(raw) {
+        return raw
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#39;");
+      }
+    })();
+  </script>
+</body>
+</html>
