@@ -3122,9 +3122,13 @@
           state.sectors.forEach((sector) => {
             sector.producaoHoraAnterior = sector.producaoHoraAtual;
             sector.producaoHoraAtual = 0;
-            sector.statusMeta = classifyMeta(sector);
           });
         }
+
+        const statusContext = buildDeliveryContext();
+        state.sectors.forEach((sector) => {
+          sector.statusMeta = classifyMeta(sector, statusContext);
+        });
 
         registerProductionPoint(false);
         requestRender();
@@ -3389,16 +3393,140 @@
         else sector.prioridade = "Baixa";
       }
 
-      function classifyMeta(sector) {
-        if (sector.meta <= 0) {
-          return { label: "Sem meta", chipClass: "c-neutral" };
+      function classifyMeta(sector, context) {
+        const ctx = context || buildDeliveryContext();
+
+        if (sector.linhasRestantes <= 0) {
+          return {
+            label: "Concluido",
+            chipClass: "c-ok",
+            badgeClass: "status-high",
+            dotClass: "dot-high",
+            barColor: "#16a34a",
+            effectiveRate: getEffectiveRateBySector(sector, ctx),
+            requiredRate: 0,
+            ratio: Infinity,
+            etaMinutes: ctx.nowMinutes
+          };
         }
 
-        const rate = (sector.producaoHoraAnterior / sector.meta) * 100;
-        if (rate >= 110) return { label: "Excelente", chipClass: "c-ok" };
-        if (rate >= 90) return { label: "Bom", chipClass: "c-good" };
-        if (rate >= 70) return { label: "Ruim", chipClass: "c-warn" };
-        return { label: "Pessimo", chipClass: "c-bad" };
+        const effectiveRate = getEffectiveRateBySector(sector, ctx);
+        const remainingHours = Math.max(ctx.remainingProdHours, 0);
+        const requiredRate = remainingHours > 0 ? sector.linhasRestantes / remainingHours : Infinity;
+        const ratio = requiredRate > 0 ? (effectiveRate / requiredRate) : Infinity;
+        const etaMinutes = effectiveRate > 0
+          ? ctx.nowMinutes + ((sector.linhasRestantes / effectiveRate) * 60)
+          : null;
+
+        if (ctx.elapsedHours < 0.10 && effectiveRate <= 0) {
+          return {
+            label: "Aguardando",
+            chipClass: "c-neutral",
+            badgeClass: "status-meta",
+            dotClass: "dot-meta",
+            barColor: "#64748b",
+            effectiveRate,
+            requiredRate,
+            ratio,
+            etaMinutes
+          };
+        }
+
+        if (remainingHours <= 0) {
+          return {
+            label: "Pessimo",
+            chipClass: "c-bad",
+            badgeClass: "status-low",
+            dotClass: "dot-low",
+            barColor: "#dc2626",
+            effectiveRate,
+            requiredRate,
+            ratio: 0,
+            etaMinutes
+          };
+        }
+
+        if (effectiveRate <= 0) {
+          return {
+            label: "Ruim",
+            chipClass: "c-warn",
+            badgeClass: "status-low",
+            dotClass: "dot-low",
+            barColor: "#dc2626",
+            effectiveRate,
+            requiredRate,
+            ratio: 0,
+            etaMinutes
+          };
+        }
+
+        if (ratio >= 1.30) {
+          return {
+            label: "Excelente",
+            chipClass: "c-ok",
+            badgeClass: "status-high",
+            dotClass: "dot-high",
+            barColor: "#16a34a",
+            effectiveRate,
+            requiredRate,
+            ratio,
+            etaMinutes
+          };
+        }
+
+        if (ratio >= 1.05) {
+          return {
+            label: "Bom",
+            chipClass: "c-good",
+            badgeClass: "status-high",
+            dotClass: "dot-medium",
+            barColor: "#22c55e",
+            effectiveRate,
+            requiredRate,
+            ratio,
+            etaMinutes
+          };
+        }
+
+        if (ratio >= 0.95) {
+          return {
+            label: "No limite",
+            chipClass: "c-warn",
+            badgeClass: "status-medium",
+            dotClass: "dot-medium",
+            barColor: "#f59e0b",
+            effectiveRate,
+            requiredRate,
+            ratio,
+            etaMinutes
+          };
+        }
+
+        if (ratio >= 0.80) {
+          return {
+            label: "Ruim",
+            chipClass: "c-warn",
+            badgeClass: "status-low",
+            dotClass: "dot-low",
+            barColor: "#ef4444",
+            effectiveRate,
+            requiredRate,
+            ratio,
+            etaMinutes
+          };
+        }
+
+        return {
+          label: "Pessimo",
+          chipClass: "c-bad",
+          badgeClass: "status-low",
+          dotClass: "dot-low",
+          barColor: "#dc2626",
+          effectiveRate,
+          requiredRate,
+          ratio,
+          etaMinutes
+        };
       }
 
       function getVisibleSectors() {
@@ -3457,6 +3585,50 @@
         const elapsedHours = getElapsedSimulationHours();
         if (elapsedHours <= 0) return 0;
         return sector.linhasSeparadas / elapsedHours;
+      }
+
+      function buildDeliveryContext() {
+        return {
+          nowMinutes: state.simulatedMinutes,
+          minuteOfDay: ((Math.floor(state.simulatedMinutes) % (24 * 60)) + (24 * 60)) % (24 * 60),
+          elapsedHours: getElapsedSimulationHours(),
+          remainingProdHours: getRemainingProductiveHours(state.simulatedMinutes)
+        };
+      }
+
+      function getRemainingProductiveHours(fromMinutes) {
+        const minuteOfDay = ((Math.floor(fromMinutes) % (24 * 60)) + (24 * 60)) % (24 * 60);
+        let minutesUntilEnd = state.config.workEndMin - minuteOfDay;
+        if (minutesUntilEnd <= 0) minutesUntilEnd += 24 * 60;
+
+        let productive = 0;
+        for (let offset = 0; offset < minutesUntilEnd; offset++) {
+          const probeMinute = ((Math.floor(fromMinutes + offset) % (24 * 60)) + (24 * 60)) % (24 * 60);
+          if (isProductionWindow(probeMinute)) productive++;
+        }
+
+        return productive / 60;
+      }
+
+      function getEffectiveRateBySector(sector, context) {
+        const avgRate = getAverageLinesPerHour(sector);
+        const minuteOfHour = ((Math.floor(context.nowMinutes) % 60) + 60) % 60;
+        const currentHourFraction = minuteOfHour / 60;
+        const currentHourRate = currentHourFraction >= 0.18
+          ? sector.producaoHoraAtual / Math.max(currentHourFraction, 1 / 60)
+          : 0;
+        const lastHourRate = sector.producaoHoraAnterior;
+
+        if (currentHourRate > 0 && lastHourRate > 0) {
+          return (avgRate * 0.45) + (currentHourRate * 0.35) + (lastHourRate * 0.20);
+        }
+        if (currentHourRate > 0) {
+          return (avgRate * 0.6) + (currentHourRate * 0.4);
+        }
+        if (lastHourRate > 0) {
+          return (avgRate * 0.7) + (lastHourRate * 0.3);
+        }
+        return avgRate;
       }
 
       function getTotalSeparatedLines() {
@@ -3686,6 +3858,7 @@
           if (!visibleKeys.has(row.dataset.sectorKey)) row.remove();
         });
 
+        const deliveryContext = buildDeliveryContext();
         visible.forEach((sector, index) => {
           let row = tableRowsBySector.get(sector.setor);
           if (!row) {
@@ -3693,7 +3866,7 @@
             tableRowsBySector.set(sector.setor, row);
           }
 
-          updateMainTableRow(row, sector);
+          updateMainTableRow(row, sector, deliveryContext);
 
           const currentRowAtIndex = ui.tableBody.children[index];
           if (currentRowAtIndex !== row) {
@@ -3776,29 +3949,13 @@
         return row;
       }
 
-      function updateMainTableRow(row, sector) {
+      function updateMainTableRow(row, sector, context) {
         const refs = row._refs;
         const pct = clamp(sector.progresso, 0, 100);
-        const linhasHoraMedia = getAverageLinesPerHour(sector);
+        const statusMeta = classifyMeta(sector, context);
+        sector.statusMeta = statusMeta;
+        const linhasHoraMedia = statusMeta.effectiveRate;
         const avatar = sector.setor.replace(/[^A-Za-z0-9]/g, "").slice(0, 2).toUpperCase() || "SR";
-
-        let corBarra = "#e53e3e";
-        let statusClass = "status-low";
-        let statusText = "Atencao";
-        if (pct >= 80) {
-          corBarra = "#38a169";
-          statusClass = "status-high";
-          statusText = "Excelente";
-        } else if (pct >= 50) {
-          corBarra = "#ed8936";
-          statusClass = "status-medium";
-          statusText = "Bom";
-        }
-
-        let metaDotClass = "dot-meta";
-        if (sector.statusMeta.label === "Excelente") metaDotClass = "dot-high";
-        else if (sector.statusMeta.label === "Bom") metaDotClass = "dot-medium";
-        else if (sector.statusMeta.label === "Ruim" || sector.statusMeta.label === "Pessimo") metaDotClass = "dot-low";
 
         refs.avatar.textContent = avatar;
         refs.sectorName.textContent = sector.setor;
@@ -3812,18 +3969,19 @@
 
         setStatusBadgeClass(refs.restantesBadge, sector.linhasRestantes > 0 ? "status-low" : "status-high");
         setStatusBadgeClass(refs.containersBadge, sector.containersRestantes > 0 ? "status-medium" : "status-high");
-        setStatusBadgeClass(refs.progressStatusBadge, statusClass);
+        setStatusBadgeClass(refs.progressStatusBadge, statusMeta.badgeClass || "status-meta");
 
         refs.progressBar.style.width = `${pct.toFixed(1)}%`;
-        refs.progressBar.style.backgroundColor = corBarra;
+        refs.progressBar.style.backgroundColor = statusMeta.barColor || "#64748b";
         refs.progressLabel.textContent = fmtPct(pct);
         refs.progressLabel.classList.toggle("light", pct >= 45);
         refs.progressLabel.classList.toggle("dark", pct < 45);
-        refs.progressStatusText.textContent = statusText;
+        refs.progressStatusText.textContent = statusMeta.label;
 
         refs.linhasHora.textContent = `${fmtInt(linhasHoraMedia)} l/h`;
-        refs.linhasHoraDot.title = sector.statusMeta.label;
-        setStatusDotClass(refs.linhasHoraDot, metaDotClass);
+        const rateNeeded = Number.isFinite(statusMeta.requiredRate) ? `${fmtInt(statusMeta.requiredRate)} l/h` : "--";
+        refs.linhasHoraDot.title = `${statusMeta.label} | Atual ${fmtInt(statusMeta.effectiveRate)} l/h | Necessario ${rateNeeded}`;
+        setStatusDotClass(refs.linhasHoraDot, statusMeta.dotClass || "dot-meta");
       }
 
       function setStatusBadgeClass(element, statusClass) {
@@ -3936,17 +4094,21 @@
             ["Itens Rest.", fmtInt(sum(list, "itensRestantes"))]
           ];
         } else if (mode === "progresso") {
+          const deliveryContext = buildDeliveryContext();
           title = "Progresso por Setor";
-          subtitle = "Media de linhas realizadas por hora e desempenho por status.";
-          headers = ["Setor", "Descricao", "Progresso", "Linhas/h", "Ult. Hora", "Status"];
-          rows = list.map((sector) => [
-            sector.setor,
-            sector.descricao,
-            fmtPct(sector.progresso),
-            `${fmtInt(getAverageLinesPerHour(sector))} l/h`,
-            fmtInt(sector.producaoHoraAnterior),
-            sector.statusMeta.label
-          ]);
+          subtitle = "Status calculado por chance de entregar ate o fim da jornada.";
+          headers = ["Setor", "Descricao", "Progresso", "Linhas/h", "Necessario", "Status"];
+          rows = list.map((sector) => {
+            const status = classifyMeta(sector, deliveryContext);
+            return [
+              sector.setor,
+              sector.descricao,
+              fmtPct(sector.progresso),
+              `${fmtInt(status.effectiveRate)} l/h`,
+              Number.isFinite(status.requiredRate) ? `${fmtInt(status.requiredRate)} l/h` : "--",
+              status.label
+            ];
+          });
           summary = [
             ["Progresso Geral", fmtPct((sum(list, "linhasSeparadas") / Math.max(1, sum(list, "linhasTotais"))) * 100)],
             ["Setores Concluidos", fmtInt(list.filter((sector) => sector.linhasRestantes <= 0).length)],
