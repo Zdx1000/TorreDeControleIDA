@@ -305,6 +305,53 @@
       font-weight: 700;
     }
 
+    .sim-config-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .demand-header .sim-label {
+      margin-bottom: 0;
+      flex: 1;
+    }
+
+    .difficulty-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .difficulty-wrap label {
+      font-size: 12px;
+      opacity: 0.85;
+      white-space: nowrap;
+      color: #475569;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      text-transform: none;
+    }
+
+    .ui-select {
+      height: 36px;
+      border-radius: 10px;
+      padding: 0 10px;
+      border: 1px solid #d7e3f3;
+      background: #fff;
+      color: #0f172a;
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+    }
+
+    .ui-select:focus {
+      outline: none;
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.25);
+    }
+
     .sim-value {
       font-weight: 800;
       font-size: 22px;
@@ -2588,6 +2635,17 @@
       .timeline-history-toggle {
         width: 100%;
       }
+      .sim-config-head.demand-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+      }
+      .difficulty-wrap {
+        justify-content: space-between;
+      }
+      .ui-select {
+        width: 100%;
+      }
       .stat-card {
         padding: 12px;
         gap: 10px;
@@ -2832,7 +2890,20 @@
         </div>
       </div>
       <div class="sim-box sim-config-box">
-        <div class="sim-label">Demanda por Setor (linhas)</div>
+        <div class="sim-config-head demand-header">
+          <div class="sim-label">Demanda por Setor (linhas)</div>
+          <div class="difficulty-wrap">
+            <label for="difficultySelect">Dificuldade</label>
+            <select id="difficultySelect" class="ui-select" aria-label="Dificuldade da demanda">
+              <option value="random" selected>Aleatorio (padrao)</option>
+              <option value="very_hard">Muito dificil</option>
+              <option value="hard">Dificil</option>
+              <option value="medium">Media</option>
+              <option value="easy">Facil</option>
+              <option value="very_easy">Muito facil</option>
+            </select>
+          </div>
+        </div>
         <div class="sim-config-grid two">
           <label>
             Setor
@@ -3254,6 +3325,7 @@
         simulatedMinutes: SIM_START_MINUTES,
         secondsPerProdHour: 60,
         chartFilter: "todos",
+        demandDifficulty: "random",
         timelineHorizon: "120",
         timelineRateMode: "avg",
         productionHistory: [],
@@ -3278,15 +3350,33 @@
           simulation: {
             lphWindowMinutes: 60,
             ewmaAlpha: 0.20,
-            warmupMinutes: 30,
-            postLunchMinutes: 20,
+            warmupMinutes: 22,
+            postLunchMinutes: 14,
             fatigueWindowMinutes: 60,
-            fatigueDrop: 0.06,
+            fatigueDrop: 0.04,
             endSprintMinutes: 20,
-            endSprintBoost: 0.05,
-            stopProbPerMin: 0.02,
-            cv: 0.12,
-            forecastCurrentWeight: 0.60
+            endSprintBoost: 0.04,
+            stopProbPerMin: 0.012,
+            cv: 0.09,
+            forecastCurrentWeight: 0.60,
+            demandVeryEasyMin: 10000,
+            demandVeryEasyMax: 13000,
+            demandEasyMin: 13000,
+            demandEasyMax: 18000,
+            demandMediumMin: 18000,
+            demandMediumMax: 24000,
+            demandHardMin: 24000,
+            demandHardMax: 30000,
+            demandVeryHardMin: 30000,
+            demandVeryHardMax: 36000,
+            demandRandomEasyWeight: 55,
+            demandRandomVeryEasyWeight: 25,
+            demandRandomMediumWeight: 15,
+            demandRandomHardWeight: 4,
+            demandRandomVeryHardWeight: 1,
+            capacityMinPerShift: 24000,
+            capacityMaxPerShift: 31000,
+            calmScenarioLimit: 24000
           }
         }
       };
@@ -3360,6 +3450,7 @@
         distArmInput: document.getElementById("distArmInput"),
         distTotalLabel: document.getElementById("distTotalLabel"),
         applyDistBtn: document.getElementById("applyDistBtn"),
+        difficultySelect: document.getElementById("difficultySelect"),
         demandSectorSelect: document.getElementById("demandSectorSelect"),
         demandValueInput: document.getElementById("demandValueInput"),
         applyDemandBtn: document.getElementById("applyDemandBtn"),
@@ -3506,6 +3597,7 @@
         ui.timelineHistoryWindowSelect.value = String(state.timelineHistoryWindowMinutes);
         ui.timelineHistoryModeSelect.value = state.timelineHistoryMode;
         ui.timelineStatusToleranceSelect.value = String(state.timelineStatusTolerancePct);
+        ui.difficultySelect.value = state.demandDifficulty;
         applyTimelineHistoryExpandedState();
         ensureTimelineHistoryChart();
         resetSimulation(true);
@@ -3592,6 +3684,18 @@
 
         [ui.distFracInput, ui.distGrossaInput, ui.distArmInput].forEach((input) => {
           input.addEventListener("input", updateDistributionTotalLabel);
+        });
+
+        ui.difficultySelect.addEventListener("change", (event) => {
+          const selected = String(event.target.value || "random");
+          if (isAnyDemandOverrideActive()) {
+            ui.difficultySelect.value = state.demandDifficulty;
+            setConfigFeedback("Override ativo: dificuldade nao altera demanda.");
+            updateDemandStatus(ui.demandSectorSelect.value);
+            return;
+          }
+          state.demandDifficulty = selected;
+          resetSimulation(false);
         });
 
         ui.applyDemandBtn.addEventListener("click", () => {
@@ -4137,15 +4241,24 @@
         ui.distTotalLabel.classList.add(total === 100 ? "status-run" : "status-break");
       }
 
+      function isAnyDemandOverrideActive() {
+        return Object.values(state.config.demandOverrides).some((value) => Number(value) > 0);
+      }
+
       function updateDemandStatus(setor) {
         const key = setor || ui.demandSectorSelect.value;
         const override = Number(state.config.demandOverrides[key] || 0);
+        const anyOverride = isAnyDemandOverrideActive();
         ui.demandValueInput.value = override > 0 ? String(override) : "";
-        ui.demandStatus.textContent = override > 0
-          ? `Override ativo: ${fmtInt(override)} linhas`
-          : "Sem override";
+        if (override > 0) {
+          ui.demandStatus.textContent = `Override ativo: ${fmtInt(override)} linhas`;
+        } else if (anyOverride) {
+          ui.demandStatus.textContent = "Override ativo em outro setor";
+        } else {
+          ui.demandStatus.textContent = "Sem override";
+        }
         ui.demandStatus.classList.remove("status-run", "status-off");
-        ui.demandStatus.classList.add(override > 0 ? "status-run" : "status-off");
+        ui.demandStatus.classList.add((override > 0 || anyOverride) ? "status-run" : "status-off");
       }
 
       function setConfigFeedback(message) {
@@ -4261,14 +4374,14 @@
         const categoryKey = getDistributionCategoryKey(setor);
         const base = getSectorProfileBase(categoryKey);
         return {
-          warmupMinutes: clamp(Math.round(jitter(base.warmupMinutes, 0.20)), 10, 90),
-          postLunchMinutes: clamp(Math.round(jitter(base.postLunchMinutes, 0.25)), 8, 60),
+          warmupMinutes: clamp(Math.round(jitter(base.warmupMinutes, 0.16)), 10, 90),
+          postLunchMinutes: clamp(Math.round(jitter(base.postLunchMinutes, 0.20)), 8, 60),
           fatigueWindowMinutes: clamp(Math.round(jitter(base.fatigueWindowMinutes, 0.15)), 30, 180),
-          fatigueDrop: clamp(jitter(base.fatigueDrop, 0.22), 0.02, 0.16),
+          fatigueDrop: clamp(jitter(base.fatigueDrop, 0.18), 0.02, 0.16),
           endSprintMinutes: clamp(Math.round(jitter(base.endSprintMinutes, 0.25)), 0, 60),
-          endSprintBoost: clamp(jitter(base.endSprintBoost, 0.30), 0, 0.15),
-          stopProbPerMin: clamp(jitter(base.stopProbPerMin, 0.35), 0.004, 0.08),
-          cv: clamp(jitter(base.cv, 0.30), 0.06, 0.28)
+          endSprintBoost: clamp(jitter(base.endSprintBoost, 0.24), 0, 0.15),
+          stopProbPerMin: clamp(jitter(base.stopProbPerMin, 0.25), 0.004, 0.05),
+          cv: clamp(jitter(base.cv, 0.22), 0.06, 0.22)
         };
       }
 
@@ -4681,63 +4794,341 @@
         };
       }
 
+      function getConfiguredShiftProductiveHours() {
+        let durationMinutes = state.config.workEndMin - state.config.workStartMin;
+        if (durationMinutes <= 0) durationMinutes += 24 * 60;
+        const shiftStart = state.config.workStartMin;
+        const shiftEnd = shiftStart + durationMinutes;
+        const productiveMinutes = getWorkingMinutesBetween(shiftStart, shiftEnd);
+        return Math.max(productiveMinutes / 60, 1 / 60);
+      }
+
+      function weightedPickWeightedList(list) {
+        const entries = Array.isArray(list) ? list : [];
+        if (!entries.length) return null;
+
+        const sanitized = entries
+          .map((entry) => ({
+            key: entry.key,
+            w: Math.max(0, Number(entry.w) || 0)
+          }))
+          .filter((entry) => entry.key);
+
+        if (!sanitized.length) return String(entries[entries.length - 1].key || "");
+
+        const totalWeight = sanitized.reduce((acc, item) => acc + item.w, 0);
+        if (totalWeight <= 0) return String(sanitized[sanitized.length - 1].key);
+
+        const draw = Math.random() * totalWeight;
+        let acc = 0;
+        for (let index = 0; index < sanitized.length; index++) {
+          acc += sanitized[index].w;
+          if (draw <= acc) return String(sanitized[index].key);
+        }
+
+        return String(sanitized[sanitized.length - 1].key);
+      }
+
+      function getDemandDifficultyRangeMap() {
+        const sim = state.config.simulation;
+        return {
+          very_easy: {
+            min: Math.round(Number(sim.demandVeryEasyMin) || 10000),
+            max: Math.round(Number(sim.demandVeryEasyMax) || 13000)
+          },
+          easy: {
+            min: Math.round(Number(sim.demandEasyMin) || 13000),
+            max: Math.round(Number(sim.demandEasyMax) || 18000)
+          },
+          medium: {
+            min: Math.round(Number(sim.demandMediumMin) || 18000),
+            max: Math.round(Number(sim.demandMediumMax) || 24000)
+          },
+          hard: {
+            min: Math.round(Number(sim.demandHardMin) || 24000),
+            max: Math.round(Number(sim.demandHardMax) || 30000)
+          },
+          very_hard: {
+            min: Math.round(Number(sim.demandVeryHardMin) || 30000),
+            max: Math.round(Number(sim.demandVeryHardMax) || 36000)
+          }
+        };
+      }
+
+      function sampleDemandTotalLines(selectedDifficulty) {
+        const sim = state.config.simulation;
+        const ranges = getDemandDifficultyRangeMap();
+        let level = String(selectedDifficulty || state.demandDifficulty || "random");
+
+        if (level === "random") {
+          level = weightedPickWeightedList([
+            { key: "easy", w: Number(sim.demandRandomEasyWeight) || 55 },
+            { key: "very_easy", w: Number(sim.demandRandomVeryEasyWeight) || 25 },
+            { key: "medium", w: Number(sim.demandRandomMediumWeight) || 15 },
+            { key: "hard", w: Number(sim.demandRandomHardWeight) || 4 },
+            { key: "very_hard", w: Number(sim.demandRandomVeryHardWeight) || 1 }
+          ]) || "easy";
+        }
+
+        if (!ranges[level]) {
+          level = "easy";
+        }
+
+        const cfg = ranges[level];
+        const min = Math.min(cfg.min, cfg.max);
+        const max = Math.max(cfg.min, cfg.max);
+        return {
+          total: randInt(min, max),
+          levelKey: level
+        };
+      }
+
+      function sampleCapacityTotalLines() {
+        const sim = state.config.simulation;
+        const min = Math.round(Number(sim.capacityMinPerShift) || 24000);
+        const max = Math.round(Number(sim.capacityMaxPerShift) || 31000);
+        return randInt(Math.min(min, max), Math.max(min, max));
+      }
+
+      function allocateIntegerByWeight(total, items, weightGetter, keyGetter) {
+        const result = new Map();
+        const normalizedTotal = Math.max(0, Math.round(Number(total) || 0));
+        const list = Array.isArray(items) ? items : [];
+        const resolveKey = typeof keyGetter === "function"
+          ? keyGetter
+          : (item, index) => (item && item.setor ? item.setor : String(index));
+
+        if (!list.length || normalizedTotal <= 0) {
+          list.forEach((item, index) => {
+            result.set(resolveKey(item, index), 0);
+          });
+          return result;
+        }
+
+        const weighted = list.map((item, index) => {
+          const raw = typeof weightGetter === "function" ? weightGetter(item, index) : 1;
+          const weight = Math.max(0, Number(raw) || 0);
+          return {
+            item,
+            index,
+            key: resolveKey(item, index),
+            weight
+          };
+        });
+
+        let weightSum = weighted.reduce((acc, entry) => acc + entry.weight, 0);
+        if (weightSum <= 0) {
+          weighted.forEach((entry) => {
+            entry.weight = 1;
+          });
+          weightSum = weighted.length;
+        }
+
+        const buckets = weighted.map((entry) => {
+          const exact = (entry.weight / weightSum) * normalizedTotal;
+          const base = Math.floor(exact);
+          return {
+            ...entry,
+            base,
+            fraction: exact - base
+          };
+        });
+
+        let assigned = buckets.reduce((acc, entry) => acc + entry.base, 0);
+        let remainder = Math.max(0, normalizedTotal - assigned);
+
+        buckets.sort((a, b) => b.fraction - a.fraction);
+        for (let index = 0; index < buckets.length && remainder > 0; index++) {
+          buckets[index].base += 1;
+          remainder--;
+        }
+
+        buckets.forEach((entry) => {
+          result.set(entry.key, entry.base);
+        });
+
+        return result;
+      }
+
       function buildFakeData() {
         const draft = SECTORS_BASE.map((base) => {
-          const metaSimulada = base.meta > 0 ? base.meta : randInt(26, 48);
-          const baseLinhas = Math.max(120, Math.round(metaSimulada * rand(8.2, 12.8)));
           return {
             setor: base.setor,
             descricao: base.descricao,
             meta: base.meta,
-            metaSimulada,
-            baseLPH: Math.max(10, metaSimulada * rand(0.9, 1.12)),
+            metaSimulada: Math.max(20, base.meta > 0 ? base.meta : randInt(26, 48)),
+            baseLPH: 0,
             simProfile: buildSectorSimulationProfile(base.setor),
             seed: getSectorSeed(base.setor),
-            linhasTotais: baseLinhas
+            categoryKey: getDistributionCategoryKey(base.setor),
+            demandWeight: Math.max(6, base.meta > 0 ? base.meta : randInt(18, 40)),
+            linhasTotais: 0,
+            isOverride: false
           };
         });
 
-        const grouped = {
-          fracionado: [],
-          cargaGrossa: [],
-          arm20: []
-        };
+        const demandSample = sampleDemandTotalLines(state.demandDifficulty);
+        const demandTarget = demandSample.total;
+        const capacityTarget = sampleCapacityTotalLines();
+        const productiveHours = getConfiguredShiftProductiveHours();
+        const baseLPHTotal = capacityTarget / Math.max(productiveHours, 1 / 60);
 
-        let adjustableTotal = 0;
+        let overridesTotal = 0;
+        const adjustable = [];
 
         draft.forEach((item) => {
           const overrideValue = Number(state.config.demandOverrides[item.setor] || 0);
           if (overrideValue > 0) {
             item.linhasTotais = Math.max(20, Math.round(overrideValue));
+            item.isOverride = true;
+            overridesTotal += item.linhasTotais;
             return;
           }
 
-          const categoryKey = getDistributionCategoryKey(item.setor);
-          if (!categoryKey) return;
-
-          grouped[categoryKey].push(item);
-          adjustableTotal += item.linhasTotais;
+          item.linhasTotais = 0;
+          item.isOverride = false;
+          adjustable.push(item);
         });
 
-        if (adjustableTotal > 0) {
-          const targets = state.config.distribution;
-          ["fracionado", "cargaGrossa", "arm20"].forEach((categoryKey) => {
-            const categoryItems = grouped[categoryKey];
-            if (!categoryItems.length) return;
-            const currentTotal = categoryItems.reduce((sum, item) => sum + item.linhasTotais, 0);
-            const targetTotal = adjustableTotal * (targets[categoryKey] / 100);
-            const factor = currentTotal > 0 ? (targetTotal / currentTotal) : 1;
-            categoryItems.forEach((item) => {
-              item.linhasTotais = Math.max(20, Math.round(item.linhasTotais * factor));
-            });
+        const effectiveDemandTarget = Math.max(demandTarget, overridesTotal);
+        let remainingDemand = Math.max(effectiveDemandTarget - overridesTotal, 0);
+
+        if (adjustable.length && remainingDemand > 0) {
+          const baselineTotal = Math.min(remainingDemand, adjustable.length * 20);
+          const baselineMap = allocateIntegerByWeight(baselineTotal, adjustable, () => 1);
+          adjustable.forEach((item) => {
+            item.linhasTotais += baselineMap.get(item.setor) || 0;
           });
+          remainingDemand -= baselineTotal;
         }
 
+        const categorized = adjustable.filter((item) => Boolean(item.categoryKey));
+        const misc = adjustable.filter((item) => !item.categoryKey);
+
+        if (remainingDemand > 0 && misc.length) {
+          const miscReserve = Math.min(
+            remainingDemand,
+            Math.max(misc.length * 40, Math.round(remainingDemand * 0.04))
+          );
+          const miscMap = allocateIntegerByWeight(
+            miscReserve,
+            misc,
+            (item) => item.demandWeight * rand(0.9, 1.1)
+          );
+          misc.forEach((item) => {
+            item.linhasTotais += miscMap.get(item.setor) || 0;
+          });
+          remainingDemand -= miscReserve;
+        }
+
+        if (remainingDemand > 0) {
+          if (categorized.length) {
+            const grouped = {
+              fracionado: [],
+              cargaGrossa: [],
+              arm20: []
+            };
+            categorized.forEach((item) => {
+              grouped[item.categoryKey].push(item);
+            });
+
+            const buckets = [
+              {
+                setor: "fracionado",
+                key: "fracionado",
+                pct: Math.max(0, Number(state.config.distribution.fracionado) || 0),
+                items: grouped.fracionado
+              },
+              {
+                setor: "cargaGrossa",
+                key: "cargaGrossa",
+                pct: Math.max(0, Number(state.config.distribution.cargaGrossa) || 0),
+                items: grouped.cargaGrossa
+              },
+              {
+                setor: "arm20",
+                key: "arm20",
+                pct: Math.max(0, Number(state.config.distribution.arm20) || 0),
+                items: grouped.arm20
+              }
+            ].filter((bucket) => bucket.items.length > 0);
+
+            const bucketPctSum = buckets.reduce((acc, bucket) => acc + bucket.pct, 0);
+            const bucketTotals = allocateIntegerByWeight(
+              remainingDemand,
+              buckets,
+              (bucket) => (bucketPctSum > 0 ? bucket.pct : 1),
+              (bucket) => bucket.key
+            );
+
+            buckets.forEach((bucket) => {
+              const bucketTotal = bucketTotals.get(bucket.key) || 0;
+              const bySector = allocateIntegerByWeight(
+                bucketTotal,
+                bucket.items,
+                (item) => item.demandWeight * rand(0.88, 1.14)
+              );
+
+              bucket.items.forEach((item) => {
+                item.linhasTotais += bySector.get(item.setor) || 0;
+              });
+            });
+
+            remainingDemand = 0;
+          } else if (misc.length) {
+            const miscMap = allocateIntegerByWeight(
+              remainingDemand,
+              misc,
+              (item) => item.demandWeight * rand(0.85, 1.2)
+            );
+            misc.forEach((item) => {
+              item.linhasTotais += miscMap.get(item.setor) || 0;
+            });
+            remainingDemand = 0;
+          }
+        }
+
+        if (remainingDemand > 0 && adjustable.length) {
+          const topWeightItem = adjustable.reduce((selected, item) =>
+            (item.demandWeight > selected.demandWeight ? item : selected), adjustable[0]);
+          topWeightItem.linhasTotais += remainingDemand;
+        }
+
+        const totalDemandLines = Math.max(1, draft.reduce((acc, item) => acc + item.linhasTotais, 0));
+        const capacityWeights = draft.map((item) => {
+          const demandShare = item.linhasTotais / totalDemandLines;
+          const demandBase = item.linhasTotais > 0 ? Math.max(item.linhasTotais, 20) : 1;
+          const weighted = demandBase * rand(0.92, 1.08) * (0.85 + (demandShare * 0.30));
+          return {
+            item,
+            weight: Math.max(weighted, 0.1)
+          };
+        });
+        const capacityWeightSum = capacityWeights.reduce((acc, entry) => acc + entry.weight, 0) || 1;
+        capacityWeights.forEach((entry) => {
+          const share = entry.weight / capacityWeightSum;
+          entry.item.baseLPH = Math.max(1, baseLPHTotal * share);
+          entry.item.metaSimulada = Math.max(20, Math.round(entry.item.baseLPH * rand(0.90, 1.10)));
+        });
+
+        state.lastScenario = {
+          demandTarget: effectiveDemandTarget,
+          demandDifficulty: state.demandDifficulty,
+          demandLevel: demandSample.levelKey,
+          capacityTarget,
+          productiveHours,
+          calmLimit: Number(state.config.simulation.calmScenarioLimit) || 24000
+        };
+
         return draft.map((item) => {
-          const linhasTotais = Math.max(20, Math.round(item.linhasTotais));
-          const containersTotais = Math.max(6, Math.round(linhasTotais * rand(0.20, 0.36)));
-          const itensTotais = Math.max(120, Math.round(linhasTotais * rand(5.2, 9.1)));
-          const pesoPrevisto = round2(linhasTotais * rand(0.85, 3.10));
+          const linhasTotais = Math.max(0, Math.round(item.linhasTotais));
+          const containersTotais = linhasTotais > 0
+            ? Math.max(1, Math.round(linhasTotais * rand(0.20, 0.36)))
+            : 0;
+          const itensTotais = linhasTotais > 0
+            ? Math.max(20, Math.round(linhasTotais * rand(5.2, 9.1)))
+            : 0;
+          const pesoPrevisto = linhasTotais > 0 ? round2(linhasTotais * rand(0.85, 3.10)) : 0;
 
           return {
             setor: item.setor,
