@@ -707,9 +707,21 @@
     .timeline-history {
       margin-top: 8px;
       border: 1px solid #dbe5f1;
-      border-radius: 10px;
+      border-radius: 12px;
       background: #fff;
-      padding: 6px 8px;
+      padding: 8px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.65),
+        0 8px 18px rgba(15, 23, 42, 0.06);
+      display: grid;
+      gap: 8px;
+    }
+
+    .timeline-history-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
     }
 
     .timeline-history-head {
@@ -718,40 +730,352 @@
       font-weight: 800;
       text-transform: uppercase;
       letter-spacing: .06em;
-      margin-bottom: 5px;
+      margin: 0;
     }
 
-    .timeline-history svg {
+    .timeline-history-toggle {
+      min-width: 112px;
+    }
+
+    .timeline-history-compact {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      transition: opacity 0.2s ease;
+    }
+
+    .timeline-history-item {
+      border: 1px solid #dbe5f1;
+      border-radius: 10px;
+      background: #f8fafc;
+      padding: 7px 8px;
+      display: grid;
+      gap: 2px;
+      min-height: 58px;
+    }
+
+    .timeline-history-item .label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #64748b;
+      font-weight: 800;
+    }
+
+    .timeline-history-item .value {
+      font-size: 15px;
+      color: #0f172a;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+    }
+
+    .timeline-history-item .sub {
+      font-size: 10px;
+      color: #475569;
+      font-weight: 700;
+      line-height: 1.15;
+    }
+
+    .timeline-status-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      max-width: max-content;
+    }
+
+    .timeline-status-pill.ok {
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+    }
+
+    .timeline-status-pill.warn {
+      background: #fef3c7;
+      color: #92400e;
+      border: 1px solid #fcd34d;
+    }
+
+    .timeline-status-pill.critical {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+    }
+
+    .timeline-status-pill.off {
+      background: #e2e8f0;
+      color: #475569;
+      border: 1px solid #cbd5e1;
+    }
+
+    .timeline-history-expanded {
+      max-height: 0;
+      opacity: 0;
+      overflow: hidden;
+      pointer-events: none;
+      transform: translateY(-2px);
+      transition: max-height 0.24s ease, opacity 0.2s ease, transform 0.2s ease;
+      display: grid;
+      gap: 8px;
+    }
+
+    .timeline-history.expanded .timeline-history-expanded {
+      max-height: 620px;
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .timeline-history.expanded .timeline-history-compact {
+      opacity: 0;
+      height: 0;
+      overflow: hidden;
+      pointer-events: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .timeline-history-controls {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(120px, 1fr));
+      gap: 8px;
+    }
+
+    .timeline-history-controls label {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+      font-size: 10px;
+      color: #64748b;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .timeline-history-controls select {
+      appearance: none;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 12px;
+      color: #0f172a;
+      font-weight: 700;
+      background: linear-gradient(180deg, #ffffff, #f8fafc);
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .timeline-history-controls select:focus {
+      outline: none;
+      border-color: #93c5fd;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+    }
+
+    .timeline-history-kpis {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .timeline-history-kpi {
+      border: 1px solid #dbe5f1;
+      border-radius: 10px;
+      background: #f8fafc;
+      padding: 7px 8px;
+      display: grid;
+      gap: 2px;
+      min-height: 58px;
+    }
+
+    .timeline-history-kpi .label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #64748b;
+      font-weight: 800;
+    }
+
+    .timeline-history-kpi .value {
+      font-size: 15px;
+      color: #0f172a;
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+    }
+
+    .timeline-history-kpi .sub {
+      font-size: 10px;
+      color: #475569;
+      font-weight: 700;
+      line-height: 1.15;
+    }
+
+    .timeline-history-kpi .value.kpi-tone-ok,
+    .timeline-history-kpi .sub.kpi-tone-ok {
+      color: #166534;
+    }
+
+    .timeline-history-kpi .value.kpi-tone-warn,
+    .timeline-history-kpi .sub.kpi-tone-warn {
+      color: #92400e;
+    }
+
+    .timeline-history-kpi .value.kpi-tone-critical,
+    .timeline-history-kpi .sub.kpi-tone-critical {
+      color: #991b1b;
+    }
+
+    .timeline-history-kpi .value.kpi-tone-off,
+    .timeline-history-kpi .sub.kpi-tone-off {
+      color: #475569;
+    }
+
+    .timeline-history-chart {
+      position: relative;
+      height: 260px;
+      border: 1px solid #dbe5f1;
+      border-radius: 10px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(248, 250, 252, 0.95) 100%);
+      padding: 6px;
+    }
+
+    .timeline-history canvas {
       display: block;
-      width: 100%;
-      height: 58px;
+      width: 100% !important;
+      height: 100% !important;
     }
 
-    .timeline-history .axis {
-      stroke: #cbd5e1;
-      stroke-width: 1;
+    .timeline-history-tooltip {
+      position: absolute;
+      pointer-events: none;
+      min-width: 230px;
+      max-width: 320px;
+      background: rgba(15, 23, 42, 0.94);
+      color: #f8fafc;
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      border-radius: 10px;
+      padding: 8px 9px;
+      box-shadow: 0 14px 24px rgba(2, 6, 23, 0.36);
+      font-size: 11px;
+      line-height: 1.24;
+      opacity: 0;
+      transform: translateY(2px);
+      transition: opacity 0.12s ease, transform 0.12s ease;
+      z-index: 4;
     }
 
-    .timeline-history .real-line {
-      fill: none;
-      stroke: #2563eb;
-      stroke-width: 2.2;
-      stroke-linecap: round;
-      stroke-linejoin: round;
+    .timeline-history-tooltip.show {
+      opacity: 1;
+      transform: translateY(0);
     }
 
-    .timeline-history .proj-line {
-      fill: none;
-      stroke: #16a34a;
-      stroke-width: 2;
-      stroke-dasharray: 6 4;
-      stroke-linecap: round;
+    .timeline-history-tooltip .t-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
     }
 
-    .timeline-history .now-point {
-      fill: #0f172a;
-      stroke: #fff;
-      stroke-width: 2;
+    .timeline-history-tooltip .t-time {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+    }
+
+    .timeline-history-tooltip .t-badge {
+      display: inline-flex;
+      align-items: center;
+      border-radius: 999px;
+      border: 1px solid rgba(253, 186, 116, 0.9);
+      background: rgba(251, 191, 36, 0.15);
+      color: #fde68a;
+      padding: 1px 7px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .timeline-history-tooltip .t-section {
+      margin-top: 5px;
+      border-top: 1px solid rgba(148, 163, 184, 0.28);
+      padding-top: 5px;
+    }
+
+    .timeline-history-tooltip .t-title {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #cbd5e1;
+      font-weight: 800;
+      margin-bottom: 3px;
+    }
+
+    .timeline-history-tooltip .t-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .timeline-history-tooltip .t-row strong {
+      font-weight: 800;
+    }
+
+    .timeline-history-tooltip .t-delta {
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .timeline-history-tooltip .ok {
+      color: #86efac;
+    }
+
+    .timeline-history-tooltip .warn {
+      color: #fde68a;
+    }
+
+    .timeline-history-tooltip .critical {
+      color: #fca5a5;
+    }
+
+    .timeline-history-tooltip .hint {
+      margin-top: 5px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #fde68a;
+    }
+
+    .timeline-history-legend-inline {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 12px;
+      font-size: 10px;
+      color: #64748b;
+      font-weight: 700;
+    }
+
+    .timeline-history-legend-inline .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      display: inline-block;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    .timeline-history-legend-inline .dot-real { background: #2563eb; }
+    .timeline-history-legend-inline .dot-meta { background: #f59e0b; }
+    .timeline-history-legend-inline .dot-forecast { background: #10b981; }
+    .timeline-history-legend-inline .dot-break {
+      background: rgba(245, 158, 11, 0.25);
+      border: 1px solid rgba(217, 119, 6, 0.45);
+      border-radius: 3px;
     }
 
     .stats {
@@ -2246,6 +2570,24 @@
       .timeline-legend {
         gap: 6px 10px;
       }
+      .timeline-history-chart {
+        height: 220px;
+      }
+      .timeline-history-compact {
+        grid-template-columns: 1fr;
+      }
+      .timeline-history-controls {
+        grid-template-columns: 1fr;
+      }
+      .timeline-history-kpis {
+        grid-template-columns: 1fr;
+      }
+      .timeline-history-top {
+        flex-wrap: wrap;
+      }
+      .timeline-history-toggle {
+        width: 100%;
+      }
       .stat-card {
         padding: 12px;
         gap: 10px;
@@ -2585,14 +2927,91 @@
           <span><i class="dot-proj"></i>Projecao mantendo media</span>
         </div>
 
-        <div class="timeline-history">
-          <div class="timeline-history-head">Historico e tendencia</div>
-          <svg id="timelineHistorySvg" viewBox="0 0 100 40" preserveAspectRatio="none" aria-label="Historico de producao">
-            <line class="axis" x1="0" y1="39" x2="100" y2="39"></line>
-            <polyline class="real-line" id="timelineRealLine" points=""></polyline>
-            <polyline class="proj-line" id="timelineProjLine" points=""></polyline>
-            <circle class="now-point" id="timelineNowPoint" cx="0" cy="39" r="1.8"></circle>
-          </svg>
+        <div class="timeline-history" id="timelineHistoryCard">
+          <div class="timeline-history-top">
+            <div class="timeline-history-head">Historico de Tendencia</div>
+            <button class="btn btn-light btn-mini timeline-history-toggle" id="timelineHistoryToggleBtn" type="button">Expandir</button>
+          </div>
+
+          <div class="timeline-history-compact" id="timelineHistoryCompact">
+            <article class="timeline-history-item">
+              <span class="label">Status</span>
+              <span class="value"><span class="timeline-status-pill off" id="timelineSummaryStatus">Sem dados</span></span>
+              <span class="sub" id="timelineSummaryStatusSub">Aguardando producao minima.</span>
+            </article>
+            <article class="timeline-history-item">
+              <span class="label">Media Atual (LPH)</span>
+              <span class="value" id="timelineSummaryAvg">-- l/h</span>
+              <span class="sub" id="timelineSummaryAvgSub">Janela movel: 60 min</span>
+            </article>
+            <article class="timeline-history-item">
+              <span class="label">Previsao de Fechamento</span>
+              <span class="value" id="timelineSummaryEta">Sem previsao</span>
+              <span class="sub" id="timelineSummaryEtaSub">Sem ritmo suficiente no momento.</span>
+            </article>
+          </div>
+
+          <div class="timeline-history-expanded" id="timelineHistoryExpanded">
+            <div class="timeline-history-controls">
+              <label>
+                Setor
+                <select id="timelineHistorySectorSelect" aria-label="Setor do historico de tendencia"></select>
+              </label>
+              <label>
+                Janela Media
+                <select id="timelineHistoryWindowSelect" aria-label="Janela da media movel">
+                  <option value="30">30 min</option>
+                  <option value="60" selected>60 min</option>
+                  <option value="90">90 min</option>
+                </select>
+              </label>
+              <label>
+                Exibicao
+                <select id="timelineHistoryModeSelect" aria-label="Tipo de grafico do historico">
+                  <option value="accumulated" selected>Acumulado</option>
+                  <option value="interval">Intervalo (LPH)</option>
+                </select>
+              </label>
+              <label>
+                Limite Atencao
+                <select id="timelineStatusToleranceSelect" aria-label="Limite percentual de atencao">
+                  <option value="0.03">3%</option>
+                  <option value="0.05" selected>5%</option>
+                  <option value="0.08">8%</option>
+                  <option value="0.1">10%</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="timeline-history-kpis">
+              <article class="timeline-history-kpi">
+                <span class="label">Diferenca Agora</span>
+                <span class="value" id="timelineKpiDeltaValue">--</span>
+                <span class="sub" id="timelineKpiDeltaSub">Sem dados</span>
+              </article>
+              <article class="timeline-history-kpi">
+                <span class="label">LPH Atual / Necessario</span>
+                <span class="value" id="timelineKpiRatesValue">-- / --</span>
+                <span class="sub" id="timelineKpiRatesSub">Sem dados</span>
+              </article>
+              <article class="timeline-history-kpi">
+                <span class="label">Previsao de Fechamento</span>
+                <span class="value" id="timelineKpiForecastValue">Sem previsao</span>
+                <span class="sub" id="timelineKpiForecastSub">Sem ritmo suficiente.</span>
+              </article>
+            </div>
+
+            <div class="timeline-history-chart">
+              <canvas id="timelineHistoryCanvas" aria-label="Historico de producao"></canvas>
+              <div class="timeline-history-tooltip" id="timelineHistoryTooltip"></div>
+            </div>
+            <div class="timeline-history-legend-inline">
+              <span><i class="dot dot-real"></i>Producao Real</span>
+              <span><i class="dot dot-meta"></i>Meta Dinamica</span>
+              <span><i class="dot dot-forecast"></i>Previsao</span>
+              <span><i class="dot dot-break"></i>Pausa / Almoco</span>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -2795,6 +3214,7 @@
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
   <script>
     (() => {
       "use strict";
@@ -2837,6 +3257,13 @@
         timelineHorizon: "120",
         timelineRateMode: "avg",
         productionHistory: [],
+        timelineHistoryChart: null,
+        timelineHistoryExpanded: false,
+        timelineHistorySector: "__total__",
+        timelineHistoryWindowMinutes: 60,
+        timelineHistoryMode: "accumulated",
+        timelineStatusTolerancePct: 0.05,
+        timelineTooltipContext: null,
         config: {
           workStartMin: 5 * 60,
           workEndMin: 14 * 60,
@@ -2886,9 +3313,27 @@
         timelineEndLabel: document.getElementById("timelineEndLabel"),
         timelineRealProgress: document.getElementById("timelineRealProgress"),
         timelineProjectedProgress: document.getElementById("timelineProjectedProgress"),
-        timelineRealLine: document.getElementById("timelineRealLine"),
-        timelineProjLine: document.getElementById("timelineProjLine"),
-        timelineNowPoint: document.getElementById("timelineNowPoint"),
+        timelineHistoryCard: document.getElementById("timelineHistoryCard"),
+        timelineHistoryToggleBtn: document.getElementById("timelineHistoryToggleBtn"),
+        timelineSummaryStatus: document.getElementById("timelineSummaryStatus"),
+        timelineSummaryStatusSub: document.getElementById("timelineSummaryStatusSub"),
+        timelineSummaryAvg: document.getElementById("timelineSummaryAvg"),
+        timelineSummaryAvgSub: document.getElementById("timelineSummaryAvgSub"),
+        timelineSummaryEta: document.getElementById("timelineSummaryEta"),
+        timelineSummaryEtaSub: document.getElementById("timelineSummaryEtaSub"),
+        timelineHistoryExpanded: document.getElementById("timelineHistoryExpanded"),
+        timelineHistorySectorSelect: document.getElementById("timelineHistorySectorSelect"),
+        timelineHistoryWindowSelect: document.getElementById("timelineHistoryWindowSelect"),
+        timelineHistoryModeSelect: document.getElementById("timelineHistoryModeSelect"),
+        timelineStatusToleranceSelect: document.getElementById("timelineStatusToleranceSelect"),
+        timelineKpiDeltaValue: document.getElementById("timelineKpiDeltaValue"),
+        timelineKpiDeltaSub: document.getElementById("timelineKpiDeltaSub"),
+        timelineKpiRatesValue: document.getElementById("timelineKpiRatesValue"),
+        timelineKpiRatesSub: document.getElementById("timelineKpiRatesSub"),
+        timelineKpiForecastValue: document.getElementById("timelineKpiForecastValue"),
+        timelineKpiForecastSub: document.getElementById("timelineKpiForecastSub"),
+        timelineHistoryCanvas: document.getElementById("timelineHistoryCanvas"),
+        timelineHistoryTooltip: document.getElementById("timelineHistoryTooltip"),
         speedSelect: document.getElementById("speedSelect"),
         runPauseBtn: document.getElementById("runPauseBtn"),
         resetBtn: document.getElementById("resetBtn"),
@@ -2927,6 +3372,111 @@
       let renderFrameId = null;
       const BADGE_STATUS_CLASSES = ["status-high", "status-medium", "status-low", "status-meta"];
       const DOT_STATUS_CLASSES = ["dot-high", "dot-medium", "dot-low", "dot-meta"];
+      const KPI_TONE_CLASSES = ["kpi-tone-ok", "kpi-tone-warn", "kpi-tone-critical", "kpi-tone-off"];
+      let timelineHistoryPluginsRegistered = false;
+
+      const timelineLunchPlugin = {
+        id: "timelineLunchBands",
+        beforeDatasetsDraw(chart, _args, pluginOptions) {
+          const segments = pluginOptions && Array.isArray(pluginOptions.segments)
+            ? pluginOptions.segments
+            : [];
+          if (!segments.length) return;
+
+          const { ctx, chartArea, scales } = chart;
+          const xScale = scales.x;
+          if (!ctx || !chartArea || !xScale) return;
+
+          ctx.save();
+          segments.forEach((segment) => {
+            const left = xScale.getPixelForValue(segment.start);
+            const right = xScale.getPixelForValue(segment.end);
+            const width = Math.max(right - left, 1);
+            ctx.fillStyle = "rgba(245, 158, 11, 0.14)";
+            ctx.fillRect(left, chartArea.top, width, chartArea.bottom - chartArea.top);
+            ctx.strokeStyle = "rgba(217, 119, 6, 0.35)";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(left, chartArea.top, width, chartArea.bottom - chartArea.top);
+
+            if (width >= 44 && segment.label) {
+              ctx.fillStyle = "rgba(146, 64, 14, 0.92)";
+              ctx.font = "700 10px Segoe UI";
+              ctx.textAlign = "center";
+              ctx.textBaseline = "middle";
+              ctx.fillText(
+                String(segment.label),
+                left + (width / 2),
+                chartArea.top + 12
+              );
+            }
+          });
+          ctx.restore();
+        }
+      };
+
+      const timelineNowMarkerPlugin = {
+        id: "timelineNowMarker",
+        afterDatasetsDraw(chart, _args, pluginOptions) {
+          const nowMinute = Number(pluginOptions && pluginOptions.nowMinute);
+          if (!Number.isFinite(nowMinute)) return;
+
+          const { ctx, chartArea, scales } = chart;
+          const xScale = scales.x;
+          if (!ctx || !chartArea || !xScale) return;
+
+          const x = xScale.getPixelForValue(nowMinute);
+          if (!Number.isFinite(x)) return;
+
+          ctx.save();
+          ctx.strokeStyle = "#0f172a";
+          ctx.lineWidth = 1.6;
+          ctx.setLineDash([5, 3]);
+          ctx.beginPath();
+          ctx.moveTo(x, chartArea.top);
+          ctx.lineTo(x, chartArea.bottom);
+          ctx.stroke();
+
+          ctx.setLineDash([]);
+          ctx.fillStyle = "#0f172a";
+          ctx.font = "700 10px Segoe UI";
+          ctx.textAlign = "center";
+          ctx.fillText("Agora", x, Math.max(chartArea.top + 10, 12));
+          ctx.restore();
+        }
+      };
+
+      const timelineHoverFocusPlugin = {
+        id: "timelineHoverFocus",
+        afterDatasetsDraw(chart, _args, pluginOptions) {
+          const xValue = Number(pluginOptions && pluginOptions.xValue);
+          if (!Number.isFinite(xValue)) return;
+
+          const { ctx, chartArea, scales } = chart;
+          const xScale = scales.x;
+          if (!ctx || !chartArea || !xScale) return;
+
+          const x = xScale.getPixelForValue(xValue);
+          if (!Number.isFinite(x)) return;
+
+          const width = 54;
+
+          ctx.save();
+          ctx.fillStyle = "rgba(255, 255, 255, 0.34)";
+          ctx.fillRect(
+            chartArea.left,
+            chartArea.top,
+            chartArea.right - chartArea.left,
+            chartArea.bottom - chartArea.top
+          );
+          ctx.clearRect(
+            x - (width / 2),
+            chartArea.top,
+            width,
+            chartArea.bottom - chartArea.top
+          );
+          ctx.restore();
+        }
+      };
 
       init();
 
@@ -2935,6 +3485,11 @@
         syncConfigInputsFromState();
         ui.timelineHorizonSelect.value = state.timelineHorizon;
         ui.timelineRateModeSelect.value = state.timelineRateMode;
+        ui.timelineHistoryWindowSelect.value = String(state.timelineHistoryWindowMinutes);
+        ui.timelineHistoryModeSelect.value = state.timelineHistoryMode;
+        ui.timelineStatusToleranceSelect.value = String(state.timelineStatusTolerancePct);
+        applyTimelineHistoryExpandedState();
+        ensureTimelineHistoryChart();
         resetSimulation(true);
         bindEvents();
         setSimPanelCollapsed(false);
@@ -2959,6 +3514,32 @@
 
         ui.timelineRateModeSelect.addEventListener("change", (event) => {
           state.timelineRateMode = String(event.target.value || "avg");
+          requestRender();
+        });
+
+        ui.timelineHistoryToggleBtn.addEventListener("click", () => {
+          state.timelineHistoryExpanded = !state.timelineHistoryExpanded;
+          applyTimelineHistoryExpandedState();
+          requestRender();
+        });
+
+        ui.timelineHistorySectorSelect.addEventListener("change", (event) => {
+          state.timelineHistorySector = String(event.target.value || "__total__");
+          requestRender();
+        });
+
+        ui.timelineHistoryWindowSelect.addEventListener("change", (event) => {
+          state.timelineHistoryWindowMinutes = Math.max(10, Number(event.target.value) || 60);
+          requestRender();
+        });
+
+        ui.timelineHistoryModeSelect.addEventListener("change", (event) => {
+          state.timelineHistoryMode = String(event.target.value || "accumulated");
+          requestRender();
+        });
+
+        ui.timelineStatusToleranceSelect.addEventListener("change", (event) => {
+          state.timelineStatusTolerancePct = clamp(Number(event.target.value) || 0.05, 0.01, 0.3);
           requestRender();
         });
 
@@ -3087,6 +3668,336 @@
         ui.configToggleBtn.setAttribute("aria-expanded", collapsed ? "false" : "true");
       }
 
+      function applyTimelineHistoryExpandedState() {
+        ui.timelineHistoryCard.classList.toggle("expanded", state.timelineHistoryExpanded);
+        ui.timelineHistoryToggleBtn.textContent = state.timelineHistoryExpanded ? "Recolher" : "Expandir";
+        if (!state.timelineHistoryExpanded && ui.timelineHistoryTooltip) {
+          ui.timelineHistoryTooltip.classList.remove("show");
+        }
+      }
+
+      function populateTimelineHistorySectorSelect() {
+        const selected = state.timelineHistorySector;
+        const options = [
+          `<option value="__total__">Operacao Total</option>`,
+          ...state.sectors.map((sector) =>
+            `<option value="${escapeHtml(sector.setor)}">${escapeHtml(sector.setor)} - ${escapeHtml(sector.descricao)}</option>`
+          )
+        ];
+        ui.timelineHistorySectorSelect.innerHTML = options.join("");
+
+        const hasSelected = state.timelineHistorySector === "__total__"
+          || state.sectors.some((sector) => sector.setor === selected);
+        state.timelineHistorySector = hasSelected ? selected : "__total__";
+        ui.timelineHistorySectorSelect.value = state.timelineHistorySector;
+      }
+
+      function ensureTimelineHistoryChart() {
+        if (state.timelineHistoryChart || !ui.timelineHistoryCanvas || typeof Chart === "undefined") return;
+
+        if (!timelineHistoryPluginsRegistered) {
+          Chart.register(timelineLunchPlugin);
+          Chart.register(timelineNowMarkerPlugin);
+          Chart.register(timelineHoverFocusPlugin);
+          timelineHistoryPluginsRegistered = true;
+        }
+
+        state.timelineHistoryChart = new Chart(ui.timelineHistoryCanvas, {
+          type: "line",
+          data: {
+            datasets: [
+              {
+                label: "Producao Real",
+                data: [],
+                parsing: false,
+                borderColor: "#2563eb",
+                backgroundColor: "rgba(37, 99, 235, 0.14)",
+                borderWidth: 2.1,
+                pointRadius: 0,
+                pointHoverRadius: 3.2,
+                pointHitRadius: 10,
+                fill: true,
+                tension: 0.22,
+                cubicInterpolationMode: "monotone"
+              },
+              {
+                label: "Meta Dinamica",
+                data: [],
+                parsing: false,
+                borderColor: "#f59e0b",
+                borderWidth: 1.95,
+                borderDash: [6, 4],
+                pointRadius: 0,
+                pointHoverRadius: 3,
+                pointHitRadius: 10,
+                fill: false,
+                tension: 0.18,
+                cubicInterpolationMode: "monotone"
+              },
+              {
+                label: "Previsao",
+                data: [],
+                parsing: false,
+                borderColor: "#10b981",
+                borderWidth: 1.8,
+                borderDash: [2, 6],
+                borderCapStyle: "round",
+                borderJoinStyle: "round",
+                backgroundColor: "rgba(16, 185, 129, 0.12)",
+                pointRadius: 0,
+                pointHoverRadius: 3,
+                pointHitRadius: 10,
+                fill: false,
+                tension: 0.18,
+                cubicInterpolationMode: "monotone"
+              },
+              {
+                label: "Agora",
+                data: [],
+                parsing: false,
+                borderColor: "#0f172a",
+                backgroundColor: "#0f172a",
+                pointBorderColor: "#ffffff",
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 5,
+                showLine: false
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: false,
+            parsing: false,
+            normalized: true,
+            interaction: {
+              mode: "index",
+              axis: "x",
+              intersect: false
+            },
+            onHover(_event, elements, chart) {
+              const first = elements && elements.length ? elements[0] : null;
+              if (!first) {
+                if (chart.options.plugins.timelineHoverFocus.xValue !== null) {
+                  chart.options.plugins.timelineHoverFocus.xValue = null;
+                  chart.draw();
+                }
+                return;
+              }
+
+              const dataset = chart.data.datasets[first.datasetIndex];
+              const point = dataset && dataset.data ? dataset.data[first.index] : null;
+              const xValue = point && Number.isFinite(point.x) ? point.x : null;
+
+              if (chart.options.plugins.timelineHoverFocus.xValue !== xValue) {
+                chart.options.plugins.timelineHoverFocus.xValue = xValue;
+                chart.draw();
+              }
+            },
+            plugins: {
+              legend: {
+                display: false
+              },
+              tooltip: {
+                enabled: false,
+                mode: "index",
+                intersect: false,
+                external(context) {
+                  renderTimelineHistoryTooltip(context);
+                }
+              },
+              timelineLunchBands: {
+                segments: []
+              },
+              timelineNowMarker: {
+                nowMinute: null
+              },
+              timelineHoverFocus: {
+                xValue: null
+              }
+            },
+            scales: {
+              x: {
+                type: "linear",
+                min: 0,
+                max: 1,
+                grid: {
+                  color: "rgba(203, 213, 225, 0.58)"
+                },
+                border: {
+                  color: "#cbd5e1"
+                },
+                ticks: {
+                  color: "#64748b",
+                  maxTicksLimit: 6,
+                  callback(value) {
+                    return formatTimelineTick(Number(value));
+                  }
+                }
+              },
+              y: {
+                beginAtZero: true,
+                grace: "10%",
+                grid: {
+                  color: "rgba(203, 213, 225, 0.45)"
+                },
+                border: {
+                  color: "#cbd5e1"
+                },
+                ticks: {
+                  color: "#64748b",
+                  precision: 0,
+                  callback(value) {
+                    return fmtInt(Number(value));
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      function renderTimelineHistoryTooltip(context) {
+        const tooltipEl = ui.timelineHistoryTooltip;
+        if (!tooltipEl) return;
+
+        const chart = context && context.chart ? context.chart : null;
+        const tooltip = context && context.tooltip ? context.tooltip : null;
+        if (!chart || !tooltip || tooltip.opacity === 0 || !state.timelineHistoryExpanded) {
+          tooltipEl.classList.remove("show");
+          return;
+        }
+
+        const firstPoint = tooltip.dataPoints && tooltip.dataPoints.length
+          ? tooltip.dataPoints[0]
+          : null;
+        const minute = firstPoint ? Number(firstPoint.parsed.x) : NaN;
+        const metrics = Number.isFinite(minute) ? resolveTimelineTooltipMetrics(minute) : null;
+        const scopeContext = state.timelineTooltipContext;
+        if (!metrics || !scopeContext) {
+          tooltipEl.classList.remove("show");
+          return;
+        }
+
+        const hasTarget = scopeContext.targetTotal > 0;
+        const minuteOfDay = ((Math.floor(metrics.minute) % (24 * 60)) + (24 * 60)) % (24 * 60);
+        const activeBreak = getTimelineBreakLabels().find((item) => isTimeInRange(minuteOfDay, item.start, item.end));
+        const hasDiff = Number.isFinite(metrics.diff);
+        const diffValue = hasDiff ? metrics.diff : 0;
+        const deltaPct = hasTarget && hasDiff
+          ? Math.abs(diffValue) / Math.max(scopeContext.targetTotal, 1)
+          : 0;
+        const deltaClass = !hasDiff
+          ? "warn"
+          : (diffValue >= 0
+            ? "ok"
+            : (deltaPct <= state.timelineStatusTolerancePct ? "warn" : "critical"));
+        const deltaText = !hasDiff
+          ? "Sem referencia"
+          : (diffValue >= 0
+            ? `+${fmtInt(Math.abs(diffValue))} adiantado`
+            : `-${fmtInt(Math.abs(diffValue))} atrasado`);
+
+        const avgLPHText = Number.isFinite(metrics.avgLPH) ? `${fmtInt(metrics.avgLPH)} LPH` : "Insuficiente";
+        const reqLPHText = Number.isFinite(scopeContext.requiredLPHNow)
+          ? `${fmtInt(scopeContext.requiredLPHNow)} LPH`
+          : "Sem janela";
+        const hasForecast = Number.isFinite(scopeContext.forecastEndTotal);
+        const forecastEndText = hasForecast
+          ? `${fmtInt(scopeContext.forecastEndTotal)} linhas`
+          : "Sem previsao";
+        const forecastGap = hasTarget && hasForecast
+          ? Math.max(scopeContext.targetTotal - scopeContext.forecastEndTotal, 0)
+          : null;
+        const forecastGapText = hasTarget
+          ? (!hasForecast
+            ? "Sem ritmo para estimar"
+            : (forecastGap <= 0 ? "Meta atingida" : `${fmtInt(forecastGap)} linhas`))
+          : "";
+
+        const remainingWorkMinutes = Math.max(
+          0,
+          Math.round((Number(scopeContext.remainingWorkHoursNow) || 0) * 60)
+        );
+        const remainingBreakMinutes = Math.max(
+          0,
+          Math.round(Number(scopeContext.remainingBreakMinutesNow) || 0)
+        );
+        const effectiveRemainingText = formatDurationFromMinutes(remainingWorkMinutes);
+        const breaksRemainingText = formatDurationFromMinutes(remainingBreakMinutes);
+        const lowTimeAlert = remainingWorkMinutes > 0 && remainingWorkMinutes < 30;
+
+        let html = `
+          <div class="t-head">
+            <span class="t-time">Horario: ${escapeHtml(formatSimulatedClock(metrics.minute))}</span>
+            ${activeBreak ? `<span class="t-badge">PAUSA (${escapeHtml(activeBreak.label)})</span>` : ""}
+          </div>
+        `;
+
+        if (hasTarget) {
+          html += `
+            <div class="t-section">
+              <div class="t-title">Acumulado ate o momento</div>
+              <div class="t-row"><span>Produzido (Acumulado)</span><strong>${fmtInt(metrics.producedAt)} linhas</strong></div>
+              <div class="t-row"><span>Meta (Acumulada)</span><strong>${Number.isFinite(metrics.metaAccum) ? `${fmtInt(metrics.metaAccum)} linhas` : "--"}</strong></div>
+              <div class="t-row t-delta"><span>Diferenca</span><strong class="${deltaClass}">${deltaText}</strong></div>
+            </div>
+          `;
+        } else {
+          html += `
+            <div class="t-section">
+              <div class="t-title">Acumulado ate o momento</div>
+              <div class="t-row"><span>Produzido</span><strong>${fmtInt(metrics.producedAt)} linhas</strong></div>
+            </div>
+          `;
+        }
+
+        html += `
+          <div class="t-section">
+            <div class="t-title">Ritmo e previsao</div>
+            <div class="t-row"><span>LPH Medio</span><strong>${avgLPHText}</strong></div>
+            ${hasTarget ? `<div class="t-row"><span>LPH Necessario (agora)</span><strong>${reqLPHText}</strong></div>` : ""}
+            <div class="t-row"><span>Previsao no fim</span><strong>${forecastEndText}</strong></div>
+            ${hasTarget ? `<div class="t-row"><span>Falta para meta no fim</span><strong>${forecastGapText}</strong></div>` : ""}
+          </div>
+          <div class="t-section">
+            <div class="t-title">Tempo efetivo</div>
+            <div class="t-row"><span>Tempo restante efetivo</span><strong>${effectiveRemainingText}</strong></div>
+            <div class="t-row"><span>Pausas restantes</span><strong>${breaksRemainingText}</strong></div>
+          </div>
+        `;
+
+        if (activeBreak) {
+          html += `<div class="hint">Pausa ativa: meta nao avanca neste intervalo.</div>`;
+        } else if (lowTimeAlert) {
+          html += `<div class="hint">Atencao: pouco tempo restante para correcao de ritmo.</div>`;
+        }
+
+        tooltipEl.innerHTML = html;
+        tooltipEl.classList.add("show");
+
+        const parent = chart.canvas.parentNode;
+        const parentWidth = parent ? parent.clientWidth : 0;
+        const parentHeight = parent ? parent.clientHeight : 0;
+        const tooltipWidth = tooltipEl.offsetWidth || 260;
+        const tooltipHeight = tooltipEl.offsetHeight || 180;
+        let left = tooltip.caretX + 14;
+        let top = tooltip.caretY + 12;
+
+        if (left + tooltipWidth > parentWidth - 4) {
+          left = tooltip.caretX - tooltipWidth - 14;
+        }
+        if (left < 4) left = 4;
+        if (top + tooltipHeight > parentHeight - 4) {
+          top = parentHeight - tooltipHeight - 4;
+        }
+        if (top < 4) top = 4;
+
+        tooltipEl.style.left = `${left}px`;
+        tooltipEl.style.top = `${top}px`;
+      }
+
       function startTimer() {
         if (state.timerId) clearInterval(state.timerId);
         state.timerId = setInterval(onTick, 1000);
@@ -3141,6 +4052,7 @@
         ui.runPauseBtn.textContent = "Pausar";
         state.sectors = buildFakeData();
         state.productionHistory = [];
+        populateTimelineHistorySectorSelect();
         registerProductionPoint(true);
         updateDistributionTotalLabel();
         updateDemandStatus(ui.demandSectorSelect.value);
@@ -3644,6 +4556,10 @@
         const separated = getTotalSeparatedLines();
         const lastPoint = state.productionHistory[state.productionHistory.length - 1];
         const roundedMinute = Math.floor(minute);
+        const sectorValues = {};
+        state.sectors.forEach((sector) => {
+          sectorValues[sector.setor] = sector.linhasSeparadas;
+        });
 
         if (!force && lastPoint) {
           const sameMinute = Math.floor(lastPoint.minute) === roundedMinute;
@@ -3653,7 +4569,8 @@
 
         state.productionHistory.push({
           minute,
-          value: separated
+          value: separated,
+          sectors: sectorValues
         });
 
         if (state.productionHistory.length > 1400) {
@@ -3694,12 +4611,231 @@
         return shiftStartToday - (24 * 60);
       }
 
+      function getCurrentShiftEnd(nowMinutes) {
+        const shiftStart = getCurrentShiftStart(nowMinutes);
+        let duration = state.config.workEndMin - state.config.workStartMin;
+        if (duration <= 0) duration += 24 * 60;
+        return shiftStart + duration;
+      }
+
+      function getWorkingMinutesBetween(startMinute, endMinute) {
+        if (endMinute <= startMinute) return 0;
+        const first = Math.floor(startMinute);
+        const last = Math.ceil(endMinute);
+        let worked = 0;
+        for (let minute = first; minute < last; minute++) {
+          const minuteOfDay = ((minute % (24 * 60)) + (24 * 60)) % (24 * 60);
+          if (isProductionWindow(minuteOfDay)) worked++;
+        }
+        return worked;
+      }
+
+      function getBreakMinutesBetween(startMinute, endMinute) {
+        if (endMinute <= startMinute) return 0;
+        const breaks = getTimelineBreakLabels();
+        if (!breaks.length) return 0;
+
+        const first = Math.floor(startMinute);
+        const last = Math.ceil(endMinute);
+        let breakMinutes = 0;
+
+        for (let minute = first; minute < last; minute++) {
+          const minuteOfDay = ((minute % (24 * 60)) + (24 * 60)) % (24 * 60);
+          const inWork = isTimeInRange(minuteOfDay, state.config.workStartMin, state.config.workEndMin);
+          if (!inWork) continue;
+          const inBreak = breaks.some((item) => isTimeInRange(minuteOfDay, item.start, item.end));
+          if (inBreak) breakMinutes++;
+        }
+
+        return breakMinutes;
+      }
+
+      function getTimelineScopeMeta(scopeKey) {
+        if (scopeKey === "__total__") {
+          return {
+            label: "Operacao Total",
+            targetTotal: Math.max(getTotalDemandLines(), 0),
+            producedNow: Math.max(getTotalSeparatedLines(), 0)
+          };
+        }
+
+        const sector = state.sectors.find((item) => item.setor === scopeKey);
+        if (!sector) {
+          return {
+            label: "Operacao Total",
+            targetTotal: Math.max(getTotalDemandLines(), 0),
+            producedNow: Math.max(getTotalSeparatedLines(), 0)
+          };
+        }
+
+        return {
+          label: `${sector.setor} - ${sector.descricao}`,
+          targetTotal: Math.max(sector.linhasTotais, 0),
+          producedNow: Math.max(sector.linhasSeparadas, 0)
+        };
+      }
+
+      function getScopeProducedFromPoint(point, scopeKey) {
+        if (scopeKey === "__total__") return Number(point.value || 0);
+        const sectors = point.sectors || {};
+        return Number(sectors[scopeKey] || 0);
+      }
+
+      function buildScopeHistory(scopeKey, startMinute, nowMinute, producedNow) {
+        const history = state.productionHistory
+          .filter((point) => point.minute >= startMinute && point.minute <= nowMinute)
+          .map((point) => ({
+            minute: point.minute,
+            produced: getScopeProducedFromPoint(point, scopeKey)
+          }))
+          .sort((a, b) => a.minute - b.minute);
+
+        if (!history.length) {
+          history.push({ minute: startMinute, produced: 0 });
+          history.push({ minute: nowMinute, produced: producedNow });
+          return history;
+        }
+
+        if (history[0].minute > startMinute) {
+          history.unshift({ minute: startMinute, produced: history[0].produced });
+        }
+
+        const last = history[history.length - 1];
+        if (Math.abs(last.minute - nowMinute) > 0.0001 || Math.abs(last.produced - producedNow) > 0.0001) {
+          history.push({ minute: nowMinute, produced: producedNow });
+        }
+
+        return history;
+      }
+
+      function getProducedAtMinute(history, minute) {
+        if (!history.length) return 0;
+        if (minute <= history[0].minute) return history[0].produced;
+        const last = history[history.length - 1];
+        if (minute >= last.minute) return last.produced;
+
+        for (let index = 1; index < history.length; index++) {
+          const previous = history[index - 1];
+          const current = history[index];
+          if (minute < current.minute) {
+            const span = Math.max(current.minute - previous.minute, 0.0001);
+            const ratio = clamp((minute - previous.minute) / span, 0, 1);
+            return previous.produced + ((current.produced - previous.produced) * ratio);
+          }
+        }
+
+        return last.produced;
+      }
+
+      function getMovingAverageLPH(history, minute, windowMinutes) {
+        if (!history.length || windowMinutes <= 0) return null;
+        const windowStart = minute - windowMinutes;
+        const producedEnd = getProducedAtMinute(history, minute);
+        const producedStart = getProducedAtMinute(history, windowStart);
+        const producedDelta = Math.max(producedEnd - producedStart, 0);
+        const workedMinutes = getWorkingMinutesBetween(windowStart, minute);
+        if (workedMinutes <= 0) return null;
+        return producedDelta / (workedMinutes / 60);
+      }
+
+      function getFinishEstimateMinute(nowMinute, requiredLines, avgLPH, shiftEndMinute) {
+        if (requiredLines <= 0) return nowMinute;
+        if (!Number.isFinite(avgLPH) || avgLPH <= 0) return null;
+
+        const neededWorkMinutes = (requiredLines / avgLPH) * 60;
+        if (!Number.isFinite(neededWorkMinutes) || neededWorkMinutes <= 0) return nowMinute;
+
+        let remaining = neededWorkMinutes;
+        let cursor = nowMinute;
+        let guard = 0;
+
+        while (remaining > 0 && cursor < shiftEndMinute && guard < 4000) {
+          const wholeMinute = Math.floor(cursor);
+          const nextBoundary = Math.min(wholeMinute + 1, shiftEndMinute);
+          const slice = nextBoundary - cursor;
+          const minuteOfDay = ((wholeMinute % (24 * 60)) + (24 * 60)) % (24 * 60);
+
+          if (isProductionWindow(minuteOfDay)) {
+            const consumed = Math.min(slice, remaining);
+            remaining -= consumed;
+            cursor += consumed;
+            if (consumed < slice) break;
+          } else {
+            cursor = nextBoundary;
+          }
+
+          guard++;
+        }
+
+        return remaining <= 0 ? cursor : null;
+      }
+
+      function getTimelineStatus(requiredLines, targetTotal, forecastEndTotal) {
+        if (targetTotal <= 0) {
+          return {
+            key: "off",
+            label: "Sem Meta",
+            detail: "Sem meta configurada para o escopo.",
+            gap: 0
+          };
+        }
+
+        if (requiredLines <= 0) {
+          return {
+            key: "ok",
+            label: "Meta Atingida",
+            detail: "Meta ja concluida antes do fim da jornada.",
+            gap: 0
+          };
+        }
+
+        const gap = targetTotal - forecastEndTotal;
+        if (gap <= 0) {
+          return {
+            key: "ok",
+            label: "No Ritmo / OK",
+            detail: "Mantendo o ritmo atual, entrega dentro da jornada.",
+            gap
+          };
+        }
+
+        const deficitPct = gap / Math.max(targetTotal, 1);
+        if (deficitPct <= state.timelineStatusTolerancePct) {
+          return {
+            key: "warn",
+            label: "Atencao",
+            detail: `Abaixo da meta em ${fmtPct(deficitPct * 100)} (limite ${fmtPct(state.timelineStatusTolerancePct * 100)}).`,
+            gap
+          };
+        }
+
+        return {
+          key: "critical",
+          label: "Critico",
+          detail: `Deficit projetado de ${fmtPct(deficitPct * 100)} ate o fim da jornada.`,
+          gap
+        };
+      }
+
+      function getTimelineBreakLabels() {
+        const list = [];
+        if (state.config.lunchStartMin !== state.config.lunchEndMin) {
+          list.push({
+            start: state.config.lunchStartMin,
+            end: state.config.lunchEndMin,
+            label: "Almoco"
+          });
+        }
+        return list;
+      }
+
       function renderOperationTimeline() {
         const total = Math.max(getTotalDemandLines(), 1);
         const separated = getTotalSeparatedLines();
         const remaining = Math.max(total - separated, 0);
         const now = state.simulatedMinutes;
         const start = getCurrentShiftStart(now);
+        const shiftEnd = Math.max(getCurrentShiftEnd(now), now + 1);
         const end = Math.max(getTimelineWindowEnd(now), now + 1);
         const totalSpan = Math.max(end - start, 1);
         const futureHours = Math.max((end - now) / 60, 0);
@@ -3758,47 +4894,438 @@
         ui.timelineCurrentLabel.textContent = `Agora: ${formatSimulatedClock(now)}`;
         ui.timelineEndLabel.textContent = `Fim da janela: ${formatSimulatedClock(end)}`;
 
-        renderTimelineHistory(start, now, end, separated, projectedTotal, total);
+        renderTimelineHistory(start, now, shiftEnd, separated, projectedTotal, total);
       }
 
-      function renderTimelineHistory(start, now, end, separated, projectedTotal, total) {
-        const viewWidth = 100;
-        const viewHeight = 40;
-        const usableHeight = viewHeight - 1;
-        const span = Math.max(end - start, 1);
-        const maxValue = Math.max(total, projectedTotal, separated, 1);
-        const history = state.productionHistory.filter((point) => point.minute >= start && point.minute <= now);
+      function getLunchSegmentsInWindow(start, end) {
+        const breaks = getTimelineBreakLabels();
+        const segments = [];
 
-        if (!history.length) {
-          history.push({ minute: start, value: 0 });
-          history.push({ minute: now, value: separated });
-        } else {
-          const last = history[history.length - 1];
-          if (Math.abs(last.minute - now) > 0.0001 || Math.abs(last.value - separated) > 0.0001) {
-            history.push({ minute: now, value: separated });
+        breaks.forEach((item) => {
+          const firstMinute = Math.floor(start);
+          const lastMinute = Math.ceil(end);
+          let activeStart = null;
+
+          for (let minute = firstMinute; minute <= lastMinute; minute++) {
+            const minuteOfDay = ((minute % (24 * 60)) + (24 * 60)) % (24 * 60);
+            const inBreak = isTimeInRange(minuteOfDay, item.start, item.end);
+            const inWork = isTimeInRange(minuteOfDay, state.config.workStartMin, state.config.workEndMin);
+            const active = inBreak && inWork;
+
+            if (active && activeStart === null) activeStart = minute;
+            if (!active && activeStart !== null) {
+              segments.push({ start: activeStart, end: minute, label: item.label });
+              activeStart = null;
+            }
           }
-        }
 
-        const realPoints = history.map((point) => {
-          const x = clamp(((point.minute - start) / span) * viewWidth, 0, viewWidth);
-          const y = usableHeight - clamp((point.value / maxValue) * usableHeight, 0, usableHeight);
-          return `${x.toFixed(3)},${y.toFixed(3)}`;
+          if (activeStart !== null) {
+            segments.push({ start: activeStart, end: lastMinute, label: item.label });
+          }
         });
 
-        ui.timelineRealLine.setAttribute("points", realPoints.join(" "));
+        return segments.filter((segment) => segment.end > segment.start);
+      }
 
-        const nowX = clamp(((now - start) / span) * viewWidth, 0, viewWidth);
-        const nowY = usableHeight - clamp((separated / maxValue) * usableHeight, 0, usableHeight);
-        ui.timelineNowPoint.setAttribute("cx", nowX.toFixed(3));
-        ui.timelineNowPoint.setAttribute("cy", nowY.toFixed(3));
+      function buildTimelineSamplingMinutes(history, shiftStart, nowMinute, shiftEnd) {
+        const result = new Set();
+        const addMinute = (minute) => {
+          if (!Number.isFinite(minute)) return;
+          if (minute < shiftStart || minute > shiftEnd) return;
+          result.add(Math.round(minute * 1000) / 1000);
+        };
 
-        if (projectedTotal > separated) {
-          const endX = clamp(((end - start) / span) * viewWidth, 0, viewWidth);
-          const endY = usableHeight - clamp((projectedTotal / maxValue) * usableHeight, 0, usableHeight);
-          ui.timelineProjLine.setAttribute("points", `${nowX.toFixed(3)},${nowY.toFixed(3)} ${endX.toFixed(3)},${endY.toFixed(3)}`);
-        } else {
-          ui.timelineProjLine.setAttribute("points", `${nowX.toFixed(3)},${nowY.toFixed(3)} ${nowX.toFixed(3)},${nowY.toFixed(3)}`);
+        addMinute(shiftStart);
+        addMinute(nowMinute);
+        addMinute(shiftEnd);
+
+        history.forEach((point) => addMinute(point.minute));
+        getLunchSegmentsInWindow(shiftStart, shiftEnd).forEach((segment) => {
+          addMinute(segment.start);
+          addMinute(segment.end);
+        });
+
+        const step = 10;
+        const firstStep = Math.ceil(shiftStart / step) * step;
+        for (let minute = firstStep; minute < shiftEnd; minute += step) {
+          addMinute(minute);
         }
+
+        return Array.from(result).sort((a, b) => a - b);
+      }
+
+      function computeMetaAccumValue(minute, context) {
+        if (!Number.isFinite(context.requiredLPHNow)) return null;
+        if (context.targetTotal <= 0) return null;
+
+        if (minute <= context.nowMinute) {
+          const workedHoursBack = getWorkingMinutesBetween(minute, context.nowMinute) / 60;
+          return clamp(context.producedNow - (context.requiredLPHNow * workedHoursBack), 0, context.targetTotal);
+        }
+
+        const workedHoursForward = getWorkingMinutesBetween(context.nowMinute, minute) / 60;
+        return clamp(context.producedNow + (context.requiredLPHNow * workedHoursForward), 0, context.targetTotal);
+      }
+
+      function computeForecastAccumValue(minute, context) {
+        if (minute < context.nowMinute) return null;
+        if (!Number.isFinite(context.avgLPHNow) || context.avgLPHNow <= 0) return null;
+        const workedHours = getWorkingMinutesBetween(context.nowMinute, minute) / 60;
+        const projected = Math.max(0, context.producedNow + (context.avgLPHNow * workedHours));
+        if (context.targetTotal > 0) {
+          return clamp(projected, 0, context.targetTotal);
+        }
+        return projected;
+      }
+
+      function computeRequiredLPHAtMinute(minute, producedReference, shiftEndMinute, targetTotal) {
+        const remainingLines = Math.max(targetTotal - producedReference, 0);
+        if (remainingLines <= 0) return 0;
+        const remainingWorkHours = getWorkingMinutesBetween(minute, shiftEndMinute) / 60;
+        if (remainingWorkHours <= 0) return null;
+        return remainingLines / remainingWorkHours;
+      }
+
+      function resolveTimelineTooltipMetrics(minute) {
+        const context = state.timelineTooltipContext;
+        if (!context) return null;
+
+        const safeMinute = clamp(minute, context.shiftStart, context.shiftEnd);
+        const producedAt = safeMinute <= context.nowMinute
+          ? getProducedAtMinute(context.history, safeMinute)
+          : context.producedNow;
+        const avgLPH = safeMinute <= context.nowMinute
+          ? getMovingAverageLPH(context.history, safeMinute, context.windowMinutes)
+          : context.avgLPHNow;
+        const metaAccum = computeMetaAccumValue(safeMinute, context);
+        const forecastAccum = computeForecastAccumValue(safeMinute, context);
+        const comparisonReal = safeMinute <= context.nowMinute
+          ? producedAt
+          : (Number.isFinite(forecastAccum) ? forecastAccum : context.producedNow);
+        const requiredLPH = computeRequiredLPHAtMinute(
+          safeMinute,
+          comparisonReal,
+          context.shiftEnd,
+          context.targetTotal
+        );
+        const diff = Number.isFinite(metaAccum) ? comparisonReal - metaAccum : null;
+
+        return {
+          minute: safeMinute,
+          producedAt,
+          avgLPH,
+          requiredLPH,
+          metaAccum,
+          forecastAccum,
+          diff,
+          comparisonReal
+        };
+      }
+
+      function applyTimelineKpiTone(valueEl, subEl, tone) {
+        KPI_TONE_CLASSES.forEach((className) => {
+          valueEl.classList.remove(className);
+          subEl.classList.remove(className);
+        });
+
+        const nextClass = KPI_TONE_CLASSES.includes(tone) ? tone : "kpi-tone-off";
+        valueEl.classList.add(nextClass);
+        subEl.classList.add(nextClass);
+      }
+
+      function renderTimelineHistoryKpis(summary) {
+        const hasTarget = summary.targetTotal > 0;
+        const hasForecast = Number.isFinite(summary.forecastEndTotal);
+        const hasAvg = Number.isFinite(summary.avgLPHNow) && summary.avgLPHNow > 0;
+        const hasRequired = Number.isFinite(summary.requiredLPHNow);
+
+        if (!hasTarget) {
+          ui.timelineKpiDeltaValue.textContent = "Sem meta";
+          ui.timelineKpiDeltaSub.textContent = `Produzido: ${fmtInt(summary.producedNow)} linhas`;
+          applyTimelineKpiTone(ui.timelineKpiDeltaValue, ui.timelineKpiDeltaSub, "kpi-tone-off");
+        } else if (!hasForecast && summary.requiredLines > 0) {
+          ui.timelineKpiDeltaValue.textContent = "--";
+          ui.timelineKpiDeltaSub.textContent = "Sem previsao para calcular diferenca.";
+          applyTimelineKpiTone(ui.timelineKpiDeltaValue, ui.timelineKpiDeltaSub, "kpi-tone-warn");
+        } else {
+          const forecastBase = hasForecast ? summary.forecastEndTotal : summary.producedNow;
+          const deltaToFinish = forecastBase - summary.targetTotal;
+          const deltaPct = Math.abs(deltaToFinish) / Math.max(summary.targetTotal, 1);
+          const gapTone = deltaToFinish >= 0
+            ? "kpi-tone-ok"
+            : (deltaPct <= state.timelineStatusTolerancePct ? "kpi-tone-warn" : "kpi-tone-critical");
+
+          ui.timelineKpiDeltaValue.textContent = `${deltaToFinish >= 0 ? "+" : "-"}${fmtInt(Math.abs(deltaToFinish))} linhas`;
+          ui.timelineKpiDeltaSub.textContent = deltaToFinish >= 0
+            ? "Adiantado na previsao final."
+            : "Atraso previsto no fechamento.";
+          applyTimelineKpiTone(ui.timelineKpiDeltaValue, ui.timelineKpiDeltaSub, gapTone);
+        }
+
+        const avgText = hasAvg ? `${fmtInt(summary.avgLPHNow)} LPH` : "--";
+        let reqText = "--";
+        if (hasTarget && summary.requiredLines <= 0) {
+          reqText = "0 LPH";
+        } else if (hasRequired) {
+          reqText = `${fmtInt(summary.requiredLPHNow)} LPH`;
+        }
+
+        ui.timelineKpiRatesValue.textContent = `${avgText} / ${reqText}`;
+        if (!hasTarget) {
+          ui.timelineKpiRatesSub.textContent = "Sem meta para comparar ritmo necessario.";
+          applyTimelineKpiTone(ui.timelineKpiRatesValue, ui.timelineKpiRatesSub, "kpi-tone-off");
+        } else if (summary.requiredLines <= 0) {
+          ui.timelineKpiRatesSub.textContent = "Meta ja atingida.";
+          applyTimelineKpiTone(ui.timelineKpiRatesValue, ui.timelineKpiRatesSub, "kpi-tone-ok");
+        } else if (!hasAvg || !hasRequired) {
+          ui.timelineKpiRatesSub.textContent = "Dados insuficientes para comparar ritmo.";
+          applyTimelineKpiTone(ui.timelineKpiRatesValue, ui.timelineKpiRatesSub, "kpi-tone-warn");
+        } else if (summary.avgLPHNow >= summary.requiredLPHNow) {
+          ui.timelineKpiRatesSub.textContent = "Ritmo atual suficiente para fechar no prazo.";
+          applyTimelineKpiTone(ui.timelineKpiRatesValue, ui.timelineKpiRatesSub, "kpi-tone-ok");
+        } else {
+          ui.timelineKpiRatesSub.textContent = "Ritmo atual abaixo do necessario.";
+          applyTimelineKpiTone(ui.timelineKpiRatesValue, ui.timelineKpiRatesSub, "kpi-tone-critical");
+        }
+
+        if (!hasForecast && summary.requiredLines > 0) {
+          ui.timelineKpiForecastValue.textContent = "Sem previsao";
+          ui.timelineKpiForecastSub.textContent = "Ritmo insuficiente para estimar fechamento.";
+          applyTimelineKpiTone(ui.timelineKpiForecastValue, ui.timelineKpiForecastSub, "kpi-tone-warn");
+          return;
+        }
+
+        ui.timelineKpiForecastValue.textContent = hasForecast
+          ? `${fmtInt(summary.forecastEndTotal)} linhas`
+          : `${fmtInt(summary.producedNow)} linhas`;
+
+        if (!hasTarget) {
+          ui.timelineKpiForecastSub.textContent = "Escopo sem meta definida.";
+          applyTimelineKpiTone(ui.timelineKpiForecastValue, ui.timelineKpiForecastSub, "kpi-tone-off");
+          return;
+        }
+
+        if (summary.requiredLines <= 0) {
+          ui.timelineKpiForecastSub.textContent = "Meta ja concluida no escopo selecionado.";
+          applyTimelineKpiTone(ui.timelineKpiForecastValue, ui.timelineKpiForecastSub, "kpi-tone-ok");
+          return;
+        }
+
+        const finishInShift = summary.finishMinute !== null && summary.finishMinute <= summary.shiftEnd;
+        const remainingForMeta = Math.max(summary.targetTotal - (summary.forecastEndTotal || 0), 0);
+        if (finishInShift || remainingForMeta <= 0) {
+          ui.timelineKpiForecastSub.textContent = summary.finishMinute !== null
+            ? `Entrega prevista ate ${formatSimulatedClock(summary.finishMinute)}.`
+            : "Mantendo o ritmo, meta no prazo.";
+          applyTimelineKpiTone(ui.timelineKpiForecastValue, ui.timelineKpiForecastSub, "kpi-tone-ok");
+        } else {
+          ui.timelineKpiForecastSub.textContent = `Falta prevista: ${fmtInt(remainingForMeta)} linhas.`;
+          applyTimelineKpiTone(ui.timelineKpiForecastValue, ui.timelineKpiForecastSub, "kpi-tone-critical");
+        }
+      }
+
+      function renderTimelineCompactSummary(summary) {
+        ui.timelineSummaryStatus.textContent = summary.status.label;
+        ui.timelineSummaryStatus.classList.remove("ok", "warn", "critical", "off");
+        ui.timelineSummaryStatus.classList.add(summary.status.key);
+        ui.timelineSummaryStatusSub.textContent = `${summary.scopeLabel}: ${summary.status.detail}`;
+
+        ui.timelineSummaryAvg.textContent = Number.isFinite(summary.avgLPHNow)
+          ? `${fmtInt(summary.avgLPHNow)} l/h`
+          : "-- l/h";
+        ui.timelineSummaryAvgSub.textContent = `Janela movel: ${summary.windowMinutes} min`;
+
+        if (summary.requiredLines <= 0) {
+          ui.timelineSummaryEta.textContent = "Meta atingida";
+          ui.timelineSummaryEtaSub.textContent = `Fechou em ${formatSimulatedClock(summary.nowMinute)}.`;
+          return;
+        }
+
+        if (!Number.isFinite(summary.avgLPHNow) || summary.avgLPHNow <= 0) {
+          ui.timelineSummaryEta.textContent = "Sem previsao";
+          ui.timelineSummaryEtaSub.textContent = "Ritmo insuficiente para estimar fechamento.";
+          return;
+        }
+
+        if (summary.finishMinute === null) {
+          ui.timelineSummaryEta.textContent = "Apos jornada";
+          ui.timelineSummaryEtaSub.textContent = `Projecao final: ${fmtInt(summary.forecastEndTotal)} / ${fmtInt(summary.targetTotal)} linhas`;
+          return;
+        }
+
+        ui.timelineSummaryEta.textContent = formatSimulatedClock(summary.finishMinute);
+        ui.timelineSummaryEtaSub.textContent = summary.finishMinute <= summary.shiftEnd
+          ? "Previsao de fechamento dentro do turno."
+          : "Previsao de fechamento apos o turno.";
+      }
+
+      function renderTimelineHistory(shiftStart, nowMinute, shiftEnd, _separated, _projectedTotal, _total) {
+        ensureTimelineHistoryChart();
+        if (!state.timelineHistoryChart) return;
+
+        const chart = state.timelineHistoryChart;
+        const scope = getTimelineScopeMeta(state.timelineHistorySector);
+        const history = buildScopeHistory(
+          state.timelineHistorySector,
+          shiftStart,
+          nowMinute,
+          scope.producedNow
+        );
+
+        const remainingWorkMinutes = getWorkingMinutesBetween(nowMinute, shiftEnd);
+        const remainingWorkHours = remainingWorkMinutes / 60;
+        const remainingBreakMinutes = getBreakMinutesBetween(nowMinute, shiftEnd);
+        const requiredLines = Math.max(scope.targetTotal - scope.producedNow, 0);
+        const avgLPHNow = getMovingAverageLPH(history, nowMinute, state.timelineHistoryWindowMinutes);
+        const hasForecastNow = requiredLines <= 0
+          || (Number.isFinite(avgLPHNow) && avgLPHNow > 0 && remainingWorkHours > 0);
+        const forecastRemainingLines = hasForecastNow && Number.isFinite(avgLPHNow) && avgLPHNow > 0
+          ? avgLPHNow * remainingWorkHours
+          : 0;
+        let forecastEndTotal = hasForecastNow
+          ? scope.producedNow + forecastRemainingLines
+          : null;
+        if (Number.isFinite(forecastEndTotal) && scope.targetTotal > 0) {
+          forecastEndTotal = clamp(forecastEndTotal, 0, scope.targetTotal);
+        }
+        const forecastForStatus = Number.isFinite(forecastEndTotal) ? forecastEndTotal : scope.producedNow;
+        const requiredLPHNow = requiredLines <= 0
+          ? 0
+          : (remainingWorkHours > 0 ? requiredLines / remainingWorkHours : null);
+        const finishMinute = getFinishEstimateMinute(
+          nowMinute,
+          requiredLines,
+          avgLPHNow,
+          shiftEnd
+        );
+        const workedSinceShiftStart = getWorkingMinutesBetween(shiftStart, nowMinute);
+        const hasMinimumData = workedSinceShiftStart >= 5 || scope.producedNow > 0;
+        const status = hasMinimumData
+          ? getTimelineStatus(requiredLines, scope.targetTotal, forecastForStatus)
+          : {
+              key: "off",
+              label: "Sem dados",
+              detail: "Aguardando dados iniciais para classificar o ritmo.",
+              gap: 0
+            };
+
+        renderTimelineCompactSummary({
+          status,
+          scopeLabel: scope.label,
+          avgLPHNow,
+          windowMinutes: state.timelineHistoryWindowMinutes,
+          finishMinute,
+          requiredLines,
+          forecastEndTotal: forecastForStatus,
+          targetTotal: scope.targetTotal,
+          nowMinute,
+          shiftEnd
+        });
+
+        renderTimelineHistoryKpis({
+          targetTotal: scope.targetTotal,
+          producedNow: scope.producedNow,
+          requiredLines,
+          avgLPHNow,
+          requiredLPHNow,
+          forecastEndTotal,
+          hasForecastNow,
+          remainingWorkHours,
+          remainingBreakMinutes,
+          finishMinute,
+          shiftEnd
+        });
+
+        state.timelineTooltipContext = {
+          scopeLabel: scope.label,
+          shiftStart,
+          shiftEnd,
+          nowMinute,
+          history,
+          targetTotal: scope.targetTotal,
+          producedNow: scope.producedNow,
+          avgLPHNow,
+          requiredLPHNow,
+          forecastEndTotal,
+          remainingWorkHoursNow: remainingWorkHours,
+          remainingBreakMinutesNow: remainingBreakMinutes,
+          hasForecastNow,
+          windowMinutes: state.timelineHistoryWindowMinutes
+        };
+
+        if (!state.timelineHistoryExpanded) return;
+
+        const sampleMinutes = buildTimelineSamplingMinutes(history, shiftStart, nowMinute, shiftEnd);
+        const realAccumData = [];
+        const metaAccumData = [];
+        const forecastAccumData = [];
+        const realIntervalData = [];
+        const requiredIntervalData = [];
+        const forecastIntervalData = [];
+
+        sampleMinutes.forEach((minute) => {
+          const metrics = resolveTimelineTooltipMetrics(minute);
+          if (!metrics) return;
+
+          const realAccum = minute <= nowMinute ? metrics.producedAt : null;
+          const metaAccum = metrics.metaAccum;
+          const forecastAccum = metrics.forecastAccum;
+
+          realAccumData.push({ x: minute, y: Number.isFinite(realAccum) ? realAccum : null });
+          metaAccumData.push({ x: minute, y: Number.isFinite(metaAccum) ? metaAccum : null });
+          forecastAccumData.push({ x: minute, y: Number.isFinite(forecastAccum) ? forecastAccum : null });
+
+          const intervalReal = minute <= nowMinute ? metrics.avgLPH : null;
+          const intervalRequired = metrics.requiredLPH;
+          const intervalForecast = minute >= nowMinute ? avgLPHNow : null;
+          realIntervalData.push({ x: minute, y: Number.isFinite(intervalReal) ? intervalReal : null });
+          requiredIntervalData.push({ x: minute, y: Number.isFinite(intervalRequired) ? intervalRequired : null });
+          forecastIntervalData.push({ x: minute, y: Number.isFinite(intervalForecast) ? intervalForecast : null });
+        });
+
+        const isIntervalMode = state.timelineHistoryMode === "interval";
+        const realData = isIntervalMode ? realIntervalData : realAccumData;
+        const requiredData = isIntervalMode ? requiredIntervalData : metaAccumData;
+        const forecastData = isIntervalMode ? forecastIntervalData : forecastAccumData;
+        const nowPointY = isIntervalMode
+          ? (Number.isFinite(avgLPHNow) ? avgLPHNow : requiredLPHNow)
+          : scope.producedNow;
+
+        chart.data.datasets[0].label = isIntervalMode ? "LPH Medio" : "Producao Real";
+        chart.data.datasets[1].label = isIntervalMode ? "LPH Necessario" : "Meta Dinamica";
+        chart.data.datasets[2].label = isIntervalMode ? "LPH Previsto" : "Previsao";
+        chart.data.datasets[0].fill = !isIntervalMode;
+        chart.data.datasets[0].data = realData;
+        chart.data.datasets[1].data = requiredData;
+        chart.data.datasets[2].data = forecastData;
+        chart.data.datasets[3].data = Number.isFinite(nowPointY)
+          ? [{ x: nowMinute, y: Math.max(nowPointY, 0) }]
+          : [];
+
+        const combinedValues = [
+          ...realData.map((item) => item.y),
+          ...requiredData.map((item) => item.y),
+          ...forecastData.map((item) => item.y),
+          nowPointY
+        ].filter((value) => Number.isFinite(value) && value >= 0);
+
+        const maxY = combinedValues.length ? Math.max(...combinedValues) : 1;
+
+        chart.options.scales.x.min = shiftStart;
+        chart.options.scales.x.max = shiftEnd;
+        chart.options.scales.y.suggestedMax = Math.max(1, maxY * 1.1);
+        chart.options.scales.y.title = {
+          display: true,
+          text: isIntervalMode ? "Linhas por Hora (LPH)" : "Linhas Acumuladas",
+          color: "#64748b",
+          font: {
+            size: 11,
+            weight: "700"
+          }
+        };
+        chart.options.plugins.timelineLunchBands.segments = getLunchSegmentsInWindow(shiftStart, shiftEnd);
+        chart.options.plugins.timelineNowMarker.nowMinute = nowMinute;
+        chart.update("none");
       }
 
       function requestRender() {
@@ -4246,6 +5773,21 @@
         const hour = Math.floor(totalMinutes / 60) % 24;
         const minute = Math.floor(totalMinutes % 60);
         return `D${day} ${pad2(hour)}:${pad2(minute)}`;
+      }
+
+      function formatTimelineTick(totalMinutes) {
+        const day = Math.floor(totalMinutes / (24 * 60)) + 1;
+        const hour = Math.floor(totalMinutes / 60) % 24;
+        const minute = Math.floor(totalMinutes % 60);
+        if (day <= 1) return `${pad2(hour)}:${pad2(minute)}`;
+        return `D${day} ${pad2(hour)}:${pad2(minute)}`;
+      }
+
+      function formatDurationFromMinutes(totalMinutes) {
+        const safeMinutes = Math.max(0, Math.round(Number(totalMinutes) || 0));
+        const hours = Math.floor(safeMinutes / 60);
+        const minutes = safeMinutes % 60;
+        return `${hours}:${pad2(minutes)}`;
       }
 
       function escapeHtml(raw) {
