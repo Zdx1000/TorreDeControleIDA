@@ -3274,7 +3274,20 @@
             cargaGrossa: 45,
             arm20: 15
           },
-          demandOverrides: {}
+          demandOverrides: {},
+          simulation: {
+            lphWindowMinutes: 60,
+            ewmaAlpha: 0.20,
+            warmupMinutes: 30,
+            postLunchMinutes: 20,
+            fatigueWindowMinutes: 60,
+            fatigueDrop: 0.06,
+            endSprintMinutes: 20,
+            endSprintBoost: 0.05,
+            stopProbPerMin: 0.02,
+            cv: 0.12,
+            forecastCurrentWeight: 0.60
+          }
         }
       };
 
@@ -3373,6 +3386,11 @@
       const BADGE_STATUS_CLASSES = ["status-high", "status-medium", "status-low", "status-meta"];
       const DOT_STATUS_CLASSES = ["dot-high", "dot-medium", "dot-low", "dot-meta"];
       const KPI_TONE_CLASSES = ["kpi-tone-ok", "kpi-tone-warn", "kpi-tone-critical", "kpi-tone-off"];
+      const PROD_STATE_OFF = "OFF";
+      const PROD_STATE_BREAK = "BREAK";
+      const PROD_STATE_DOWNTIME = "DOWNTIME";
+      const PROD_STATE_WORK = "WORK";
+      const PROD_STATE_DONE = "DONE";
       let timelineHistoryPluginsRegistered = false;
 
       const timelineLunchPlugin = {
@@ -4005,43 +4023,29 @@
 
       function onTick() {
         if (!state.running) return;
+        const stepMinutes = Math.max(1, Math.round(60 / state.secondsPerProdHour));
+        for (let step = 0; step < stepMinutes; step++) {
+          state.simulatedMinutes += 1;
+          const currentMinute = Math.floor(state.simulatedMinutes);
+          const shiftContext = getLiveShiftContext(currentMinute);
 
-        const stepMinutes = 60 / state.secondsPerProdHour;
-        const previousHour = Math.floor(state.simulatedMinutes / 60);
-        state.simulatedMinutes += stepMinutes;
-        const currentHour = Math.floor(state.simulatedMinutes / 60);
-        const minuteOfDay = Math.floor(state.simulatedMinutes % (24 * 60));
-        const productionActive = isProductionWindow(minuteOfDay);
-
-        if (productionActive) {
           state.sectors.forEach((sector) => {
-            if (sector.linhasSeparadas >= sector.linhasTotais) return;
-
-            const fluctuation = rand(0.84, 1.16);
-            const produced = sector.metaSimulada * sector.ritmo * fluctuation * (stepMinutes / 60);
-            const available = sector.linhasTotais - sector.linhasSeparadas;
-            const used = Math.min(produced, available);
-
-            sector.linhasSeparadas += used;
-            sector.producaoHoraAtual += used;
-            sector.ritmo = clamp(sector.ritmo + rand(-0.015, 0.015), 0.70, 1.25);
-            syncDerived(sector);
+            runLiveProductionMinute(sector, shiftContext);
           });
+
+          registerProductionPoint(false);
         }
 
-        if (currentHour !== previousHour) {
-          state.sectors.forEach((sector) => {
-            sector.producaoHoraAnterior = sector.producaoHoraAtual;
-            sector.producaoHoraAtual = 0;
-          });
-        }
+        state.sectors.forEach((sector) => {
+          syncDerived(sector);
+          updateSectorRates(sector, state.simulatedMinutes);
+        });
 
         const statusContext = buildDeliveryContext();
         state.sectors.forEach((sector) => {
           sector.statusMeta = classifyMeta(sector, statusContext);
         });
 
-        registerProductionPoint(false);
         requestRender();
       }
 
@@ -4054,6 +4058,9 @@
         state.productionHistory = [];
         populateTimelineHistorySectorSelect();
         registerProductionPoint(true);
+        state.sectors.forEach((sector) => {
+          updateSectorRates(sector, state.simulatedMinutes);
+        });
         updateDistributionTotalLabel();
         updateDemandStatus(ui.demandSectorSelect.value);
         updateSpeedLabel();
@@ -4170,17 +4177,22 @@
         return currentMinute >= startMinute || currentMinute < endMinute;
       }
 
+      function isScheduledBreakMinute(minuteOfDay) {
+        if (state.config.lunchStartMin === state.config.lunchEndMin) return false;
+        return isTimeInRange(minuteOfDay, state.config.lunchStartMin, state.config.lunchEndMin);
+      }
+
       function isProductionWindow(minuteOfDay) {
         const inWork = isTimeInRange(minuteOfDay, state.config.workStartMin, state.config.workEndMin);
         if (!inWork) return false;
-        const inLunch = isTimeInRange(minuteOfDay, state.config.lunchStartMin, state.config.lunchEndMin);
+        const inLunch = isScheduledBreakMinute(minuteOfDay);
         return !inLunch;
       }
 
       function getOperationState(minuteOfDay) {
         const inWork = isTimeInRange(minuteOfDay, state.config.workStartMin, state.config.workEndMin);
         if (!inWork) return { label: "Fora da jornada", className: "status-off" };
-        const inLunch = isTimeInRange(minuteOfDay, state.config.lunchStartMin, state.config.lunchEndMin);
+        const inLunch = isScheduledBreakMinute(minuteOfDay);
         if (inLunch) return { label: "Em almoco", className: "status-break" };
         return { label: "Em operacao", className: "status-run" };
       }
@@ -4193,6 +4205,482 @@
         return null;
       }
 
+      function getSectorSeed(setor) {
+        let seed = 0;
+        String(setor).split("").forEach((char, index) => {
+          seed += char.charCodeAt(0) * (index + 3);
+        });
+        return seed || 17;
+      }
+
+      function getSectorProfileBase(categoryKey) {
+        const sim = state.config.simulation;
+        if (categoryKey === "fracionado") {
+          return {
+            warmupMinutes: sim.warmupMinutes,
+            postLunchMinutes: sim.postLunchMinutes + 4,
+            fatigueWindowMinutes: sim.fatigueWindowMinutes,
+            fatigueDrop: sim.fatigueDrop,
+            endSprintMinutes: sim.endSprintMinutes,
+            endSprintBoost: sim.endSprintBoost + 0.01,
+            stopProbPerMin: sim.stopProbPerMin + 0.003,
+            cv: sim.cv + 0.015
+          };
+        }
+
+        if (categoryKey === "cargaGrossa") {
+          return {
+            warmupMinutes: Math.max(12, sim.warmupMinutes - 6),
+            postLunchMinutes: Math.max(10, sim.postLunchMinutes - 4),
+            fatigueWindowMinutes: sim.fatigueWindowMinutes,
+            fatigueDrop: Math.max(0.02, sim.fatigueDrop - 0.012),
+            endSprintMinutes: sim.endSprintMinutes,
+            endSprintBoost: Math.max(0, sim.endSprintBoost - 0.015),
+            stopProbPerMin: Math.max(0.004, sim.stopProbPerMin - 0.004),
+            cv: Math.max(0.06, sim.cv - 0.02)
+          };
+        }
+
+        return {
+          warmupMinutes: sim.warmupMinutes,
+          postLunchMinutes: sim.postLunchMinutes,
+          fatigueWindowMinutes: sim.fatigueWindowMinutes,
+          fatigueDrop: sim.fatigueDrop,
+          endSprintMinutes: sim.endSprintMinutes,
+          endSprintBoost: sim.endSprintBoost,
+          stopProbPerMin: sim.stopProbPerMin,
+          cv: sim.cv
+        };
+      }
+
+      function jitter(value, pct) {
+        return value * rand(1 - pct, 1 + pct);
+      }
+
+      function buildSectorSimulationProfile(setor) {
+        const categoryKey = getDistributionCategoryKey(setor);
+        const base = getSectorProfileBase(categoryKey);
+        return {
+          warmupMinutes: clamp(Math.round(jitter(base.warmupMinutes, 0.20)), 10, 90),
+          postLunchMinutes: clamp(Math.round(jitter(base.postLunchMinutes, 0.25)), 8, 60),
+          fatigueWindowMinutes: clamp(Math.round(jitter(base.fatigueWindowMinutes, 0.15)), 30, 180),
+          fatigueDrop: clamp(jitter(base.fatigueDrop, 0.22), 0.02, 0.16),
+          endSprintMinutes: clamp(Math.round(jitter(base.endSprintMinutes, 0.25)), 0, 60),
+          endSprintBoost: clamp(jitter(base.endSprintBoost, 0.30), 0, 0.15),
+          stopProbPerMin: clamp(jitter(base.stopProbPerMin, 0.35), 0.004, 0.08),
+          cv: clamp(jitter(base.cv, 0.30), 0.06, 0.28)
+        };
+      }
+
+      function sampleNormal(mean, stdDev) {
+        if (!Number.isFinite(stdDev) || stdDev <= 0) return mean;
+        let u1 = Math.random();
+        let u2 = Math.random();
+        if (u1 <= 0) u1 = 1e-9;
+        const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        return mean + (z * stdDev);
+      }
+
+      function sampleDowntimeDuration() {
+        const draw = Math.random();
+        if (draw < 0.60) return randInt(1, 2);
+        if (draw < 0.90) return randInt(3, 4);
+        return randInt(5, 6);
+      }
+
+      function getShiftBreakBounds(shiftStartMinute) {
+        if (state.config.lunchStartMin === state.config.lunchEndMin) {
+          return { start: null, end: null };
+        }
+
+        const minuteOfDay = ((Math.floor(shiftStartMinute) % (24 * 60)) + (24 * 60)) % (24 * 60);
+        const dayBase = shiftStartMinute - minuteOfDay;
+        let breakStart = dayBase + state.config.lunchStartMin;
+        let breakEnd = dayBase + state.config.lunchEndMin;
+        if (state.config.lunchEndMin <= state.config.lunchStartMin) {
+          breakEnd += 24 * 60;
+        }
+        if (breakStart < shiftStartMinute) {
+          breakStart += 24 * 60;
+          breakEnd += 24 * 60;
+        }
+
+        return { start: breakStart, end: breakEnd };
+      }
+
+      function getLiveShiftContext(minuteAbsolute) {
+        const minuteOfDay = ((Math.floor(minuteAbsolute) % (24 * 60)) + (24 * 60)) % (24 * 60);
+        const inWork = isTimeInRange(minuteOfDay, state.config.workStartMin, state.config.workEndMin);
+        const inBreak = inWork && isScheduledBreakMinute(minuteOfDay);
+        const shiftStart = getCurrentShiftStart(minuteAbsolute);
+        const shiftEnd = getCurrentShiftEnd(minuteAbsolute);
+        const breakBounds = getShiftBreakBounds(shiftStart);
+
+        return {
+          minute: minuteAbsolute,
+          minuteOfDay,
+          inWork,
+          inBreak,
+          shiftStart,
+          shiftEnd,
+          breakStart: breakBounds.start,
+          breakEnd: breakBounds.end
+        };
+      }
+
+      function computeWarmupFactor(minuteAbsolute, shiftStart, warmupMinutes) {
+        if (!Number.isFinite(warmupMinutes) || warmupMinutes <= 0) return 1;
+        const sinceStart = minuteAbsolute - shiftStart;
+        const ratio = clamp(sinceStart / warmupMinutes, 0, 1);
+        return 0.60 + (ratio * 0.40);
+      }
+
+      function computePostLunchFactor(minuteAbsolute, breakEnd, postLunchMinutes) {
+        if (!Number.isFinite(breakEnd)) return 1;
+        if (!Number.isFinite(postLunchMinutes) || postLunchMinutes <= 0) return 1;
+        const sinceReturn = minuteAbsolute - breakEnd;
+        if (sinceReturn <= 0) return 1;
+        const ratio = clamp(sinceReturn / postLunchMinutes, 0, 1);
+        return 0.75 + (ratio * 0.25);
+      }
+
+      function computeFatigueFactor(minuteAbsolute, shiftEnd, fatigueWindowMinutes, fatigueDrop) {
+        if (!Number.isFinite(fatigueWindowMinutes) || fatigueWindowMinutes <= 0) return 1;
+        const fatigueStart = shiftEnd - fatigueWindowMinutes;
+        if (minuteAbsolute <= fatigueStart) return 1;
+        const ratio = clamp((minuteAbsolute - fatigueStart) / fatigueWindowMinutes, 0, 1);
+        return 1 - (clamp(fatigueDrop, 0, 0.6) * ratio);
+      }
+
+      function computeEndSprintFactor(minuteAbsolute, shiftEnd, sprintWindowMinutes, sprintBoost) {
+        if (!Number.isFinite(sprintWindowMinutes) || sprintWindowMinutes <= 0) return 1;
+        if (!Number.isFinite(sprintBoost) || sprintBoost <= 0) return 1;
+        const sprintStart = shiftEnd - sprintWindowMinutes;
+        if (minuteAbsolute <= sprintStart) return 1;
+        const ratio = clamp((minuteAbsolute - sprintStart) / sprintWindowMinutes, 0, 1);
+        return 1 + (sprintBoost * ratio);
+      }
+
+      function getExpectedLpmAtMinute(baseLPH, profile, shiftContext) {
+        const baseLpm = Math.max(baseLPH, 0) / 60;
+        const warmupFactor = computeWarmupFactor(
+          shiftContext.minute,
+          shiftContext.shiftStart,
+          profile.warmupMinutes
+        );
+        const postLunchFactor = computePostLunchFactor(
+          shiftContext.minute,
+          shiftContext.breakEnd,
+          profile.postLunchMinutes
+        );
+        const fatigueFactor = computeFatigueFactor(
+          shiftContext.minute,
+          shiftContext.shiftEnd,
+          profile.fatigueWindowMinutes,
+          profile.fatigueDrop
+        );
+        const sprintFactor = computeEndSprintFactor(
+          shiftContext.minute,
+          shiftContext.shiftEnd,
+          profile.endSprintMinutes,
+          profile.endSprintBoost
+        );
+
+        return Math.max(0, baseLpm * warmupFactor * postLunchFactor * fatigueFactor * sprintFactor);
+      }
+
+      function pushSectorMinutePoint(sector, minute, prodState, producedLines) {
+        if (!Array.isArray(sector.minuteSeries)) sector.minuteSeries = [];
+        sector.minuteSeries.push({
+          minute,
+          state: prodState,
+          lines: producedLines
+        });
+
+        const maxPoints = 1700;
+        if (sector.minuteSeries.length > maxPoints) {
+          sector.minuteSeries.splice(0, sector.minuteSeries.length - maxPoints);
+        }
+      }
+
+      function getSectorProducedBetween(sector, startMinuteExclusive, endMinuteInclusive) {
+        const history = Array.isArray(sector.minuteSeries) ? sector.minuteSeries : [];
+        if (!history.length || endMinuteInclusive <= startMinuteExclusive) return 0;
+
+        let produced = 0;
+        for (let index = history.length - 1; index >= 0; index--) {
+          const point = history[index];
+          if (point.minute <= startMinuteExclusive) break;
+          if (point.minute > endMinuteInclusive) continue;
+          produced += Number(point.lines || 0);
+        }
+        return produced;
+      }
+
+      function getSectorWindowRates(sector, endMinute, windowMinutes) {
+        const history = Array.isArray(sector.minuteSeries) ? sector.minuteSeries : [];
+        if (!history.length || windowMinutes <= 0) {
+          return {
+            producedLines: 0,
+            effectiveMinutes: 0,
+            productiveMinutes: 0,
+            operationalLPH: null,
+            productiveLPH: null
+          };
+        }
+
+        const start = endMinute - windowMinutes;
+        let producedLines = 0;
+        let effectiveMinutes = 0;
+        let productiveMinutes = 0;
+
+        for (let index = history.length - 1; index >= 0; index--) {
+          const point = history[index];
+          if (point.minute <= start) break;
+          if (point.minute > endMinute) continue;
+
+          producedLines += Number(point.lines || 0);
+          if (point.state === PROD_STATE_WORK || point.state === PROD_STATE_DOWNTIME) {
+            effectiveMinutes++;
+          }
+          if (point.state === PROD_STATE_WORK) {
+            productiveMinutes++;
+          }
+        }
+
+        const operationalLPH = effectiveMinutes > 0
+          ? (producedLines / effectiveMinutes) * 60
+          : null;
+        const productiveLPH = productiveMinutes > 0
+          ? (producedLines / productiveMinutes) * 60
+          : null;
+
+        return {
+          producedLines,
+          effectiveMinutes,
+          productiveMinutes,
+          operationalLPH,
+          productiveLPH
+        };
+      }
+
+      function updateSectorRates(sector, nowMinute) {
+        const sim = state.config.simulation;
+        const windowMinutes = Math.max(10, Number(sim.lphWindowMinutes) || 60);
+        const alpha = clamp(Number(sim.ewmaAlpha) || 0.2, 0.05, 0.9);
+        const stats = getSectorWindowRates(sector, nowMinute, windowMinutes);
+        const currentHourStart = Math.floor(nowMinute / 60) * 60;
+
+        sector.producaoHoraAtual = getSectorProducedBetween(sector, currentHourStart, nowMinute);
+        sector.producaoHoraAnterior = getSectorProducedBetween(
+          sector,
+          currentHourStart - 60,
+          currentHourStart
+        );
+
+        sector.lphOperationalLastWindow = Number.isFinite(stats.operationalLPH) ? stats.operationalLPH : 0;
+        sector.lphProductiveLastWindow = Number.isFinite(stats.productiveLPH) ? stats.productiveLPH : 0;
+
+        if (Number.isFinite(stats.operationalLPH)) {
+          sector.lphOperationalEwma = Number.isFinite(sector.lphOperationalEwma)
+            ? (alpha * stats.operationalLPH) + ((1 - alpha) * sector.lphOperationalEwma)
+            : stats.operationalLPH;
+        }
+
+        if (Number.isFinite(stats.productiveLPH)) {
+          sector.lphProductiveEwma = Number.isFinite(sector.lphProductiveEwma)
+            ? (alpha * stats.productiveLPH) + ((1 - alpha) * sector.lphProductiveEwma)
+            : stats.productiveLPH;
+        }
+      }
+
+      function runLiveProductionMinute(sector, shiftContext) {
+        let produced = 0;
+        let prodState = PROD_STATE_OFF;
+        const remaining = Math.max(sector.linhasTotais - sector.linhasSeparadas, 0);
+
+        if (!shiftContext.inWork) {
+          prodState = PROD_STATE_OFF;
+          sector.downtimeRemaining = 0;
+        } else if (shiftContext.inBreak) {
+          prodState = PROD_STATE_BREAK;
+        } else if (remaining <= 0) {
+          prodState = PROD_STATE_DONE;
+        } else if (sector.downtimeRemaining > 0) {
+          prodState = PROD_STATE_DOWNTIME;
+          sector.downtimeRemaining--;
+        } else if (Math.random() < sector.simProfile.stopProbPerMin) {
+          prodState = PROD_STATE_DOWNTIME;
+          sector.downtimeRemaining = Math.max(0, sampleDowntimeDuration() - 1);
+        } else {
+          prodState = PROD_STATE_WORK;
+          const expectedLpm = getExpectedLpmAtMinute(sector.baseLPH, sector.simProfile, shiftContext);
+          const sigma = expectedLpm * sector.simProfile.cv;
+          const upper = expectedLpm * (1 + clamp(sector.simProfile.cv * 2.4, 0.35, 1.15));
+          produced = clamp(sampleNormal(expectedLpm, sigma), 0, Math.max(upper, expectedLpm));
+          produced = Math.min(produced, remaining);
+          if (!Number.isFinite(produced) || produced < 0) produced = 0;
+        }
+
+        if (produced > 0) {
+          sector.linhasSeparadas += produced;
+        }
+
+        pushSectorMinutePoint(sector, shiftContext.minute, prodState, produced);
+      }
+
+      function deterministicUnit(seedA, seedB, salt) {
+        const a = Number(seedA) || 0;
+        const b = Number(seedB) || 0;
+        const c = Number(salt) || 0;
+        const raw = Math.sin((a * 12.9898) + (b * 78.233) + (c * 37.719)) * 43758.5453123;
+        return raw - Math.floor(raw);
+      }
+
+      function deterministicNormal(seedA, seedB, salt) {
+        const u1 = Math.max(deterministicUnit(seedA, seedB, salt), 1e-8);
+        const u2 = deterministicUnit(seedA + 31.7, seedB + 19.3, salt + 1.9);
+        return Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+      }
+
+      function sampleDowntimeDurationDeterministic(seedMinute, sectorSeed, salt) {
+        const draw = deterministicUnit(seedMinute, sectorSeed, salt);
+        if (draw < 0.60) {
+          return 1 + Math.floor(deterministicUnit(seedMinute, sectorSeed, salt + 1.2) * 2);
+        }
+        if (draw < 0.90) {
+          return 3 + Math.floor(deterministicUnit(seedMinute, sectorSeed, salt + 2.2) * 2);
+        }
+        return 5 + Math.floor(deterministicUnit(seedMinute, sectorSeed, salt + 3.2) * 2);
+      }
+
+      function mix(valueA, valueB, weightB) {
+        const w = clamp(Number(weightB) || 0, 0, 1);
+        return (valueA * (1 - w)) + (valueB * w);
+      }
+
+      function createForecastSectorState(sector) {
+        const sim = state.config.simulation;
+        const current = Number.isFinite(sector.lphOperationalEwma) && sector.lphOperationalEwma > 0
+          ? sector.lphOperationalEwma
+          : (Number.isFinite(sector.lphOperationalLastWindow) && sector.lphOperationalLastWindow > 0
+            ? sector.lphOperationalLastWindow
+            : sector.baseLPH);
+        const baseLPHDynamic = mix(
+          sector.baseLPH,
+          current,
+          clamp(Number(sim.forecastCurrentWeight) || 0.6, 0, 1)
+        );
+
+        return {
+          seed: sector.seed,
+          baseLPH: Math.max(baseLPHDynamic, 0),
+          profile: sector.simProfile,
+          remaining: Math.max(sector.linhasTotais - sector.linhasSeparadas, 0),
+          downtimeRemaining: 0
+        };
+      }
+
+      function runForecastMinuteForSector(forecastSector, shiftContext, horizonSeed) {
+        if (forecastSector.remaining <= 0) return 0;
+        if (!shiftContext.inWork || shiftContext.inBreak) return 0;
+
+        if (forecastSector.downtimeRemaining > 0) {
+          forecastSector.downtimeRemaining--;
+          return 0;
+        }
+
+        const stopDraw = deterministicUnit(
+          shiftContext.minute + horizonSeed,
+          forecastSector.seed,
+          0.61
+        );
+        if (stopDraw < forecastSector.profile.stopProbPerMin) {
+          const duration = sampleDowntimeDurationDeterministic(
+            shiftContext.minute + horizonSeed,
+            forecastSector.seed,
+            0.83
+          );
+          forecastSector.downtimeRemaining = Math.max(0, duration - 1);
+          return 0;
+        }
+
+        const expectedLpm = getExpectedLpmAtMinute(
+          forecastSector.baseLPH,
+          forecastSector.profile,
+          shiftContext
+        );
+        const sigma = expectedLpm * forecastSector.profile.cv * 0.70;
+        const z = deterministicNormal(
+          shiftContext.minute + horizonSeed,
+          forecastSector.seed,
+          2.37
+        );
+        let produced = expectedLpm + (z * sigma);
+        const maxLimit = expectedLpm * (1 + clamp(forecastSector.profile.cv * 2, 0.30, 1.00));
+        produced = clamp(produced, 0, Math.max(maxLimit, expectedLpm));
+        produced = Math.min(produced, forecastSector.remaining);
+        if (!Number.isFinite(produced) || produced <= 0) return 0;
+
+        forecastSector.remaining -= produced;
+        return produced;
+      }
+
+      function getScopeSectors(scopeKey) {
+        if (scopeKey === "__total__") return state.sectors;
+        const sector = state.sectors.find((item) => item.setor === scopeKey);
+        return sector ? [sector] : [];
+      }
+
+      function buildScopeForecastSeries(scopeKey, nowMinute, endMinute) {
+        const fromMinute = Math.floor(nowMinute);
+        const toMinute = Math.floor(endMinute);
+        if (toMinute <= fromMinute) {
+          return {
+            series: [{ minute: fromMinute, produced: 0 }],
+            projectedLines: 0,
+            finishMinute: null
+          };
+        }
+
+        const sectors = getScopeSectors(scopeKey);
+        if (!sectors.length) {
+          return {
+            series: [{ minute: fromMinute, produced: 0 }],
+            projectedLines: 0,
+            finishMinute: null
+          };
+        }
+
+        const localStates = sectors.map((sector) => createForecastSectorState(sector));
+        const horizonSeed = Math.floor(nowMinute);
+        const series = [{ minute: fromMinute, produced: 0 }];
+        let cumulative = 0;
+        let finishMinute = null;
+
+        for (let minute = fromMinute + 1; minute <= toMinute; minute++) {
+          const shiftContext = getLiveShiftContext(minute);
+          let producedMinute = 0;
+
+          localStates.forEach((localState) => {
+            producedMinute += runForecastMinuteForSector(localState, shiftContext, horizonSeed);
+          });
+
+          cumulative += producedMinute;
+          series.push({ minute, produced: cumulative });
+
+          if (finishMinute === null && localStates.every((item) => item.remaining <= 0.0001)) {
+            finishMinute = minute;
+          }
+        }
+
+        return {
+          series,
+          projectedLines: cumulative,
+          finishMinute
+        };
+      }
+
       function buildFakeData() {
         const draft = SECTORS_BASE.map((base) => {
           const metaSimulada = base.meta > 0 ? base.meta : randInt(26, 48);
@@ -4202,7 +4690,9 @@
             descricao: base.descricao,
             meta: base.meta,
             metaSimulada,
-            ritmo: rand(0.86, 1.10),
+            baseLPH: Math.max(10, metaSimulada * rand(0.9, 1.12)),
+            simProfile: buildSectorSimulationProfile(base.setor),
+            seed: getSectorSeed(base.setor),
             linhasTotais: baseLinhas
           };
         });
@@ -4254,7 +4744,15 @@
             descricao: item.descricao,
             meta: item.meta,
             metaSimulada: item.metaSimulada,
-            ritmo: item.ritmo,
+            baseLPH: item.baseLPH,
+            simProfile: item.simProfile,
+            seed: item.seed,
+            downtimeRemaining: 0,
+            minuteSeries: [],
+            lphOperationalEwma: 0,
+            lphProductiveEwma: 0,
+            lphOperationalLastWindow: 0,
+            lphProductiveLastWindow: 0,
             linhasTotais,
             linhasSeparadas: 0,
             linhasRestantes: linhasTotais,
@@ -4494,9 +4992,13 @@
       }
 
       function getAverageLinesPerHour(sector) {
-        const elapsedHours = getElapsedSimulationHours();
-        if (elapsedHours <= 0) return 0;
-        return sector.linhasSeparadas / elapsedHours;
+        if (Number.isFinite(sector.lphOperationalEwma) && sector.lphOperationalEwma > 0) {
+          return sector.lphOperationalEwma;
+        }
+        if (Number.isFinite(sector.lphOperationalLastWindow) && sector.lphOperationalLastWindow > 0) {
+          return sector.lphOperationalLastWindow;
+        }
+        return 0;
       }
 
       function buildDeliveryContext() {
@@ -4523,24 +5025,8 @@
       }
 
       function getEffectiveRateBySector(sector, context) {
-        const avgRate = getAverageLinesPerHour(sector);
-        const minuteOfHour = ((Math.floor(context.nowMinutes) % 60) + 60) % 60;
-        const currentHourFraction = minuteOfHour / 60;
-        const currentHourRate = currentHourFraction >= 0.18
-          ? sector.producaoHoraAtual / Math.max(currentHourFraction, 1 / 60)
-          : 0;
-        const lastHourRate = sector.producaoHoraAnterior;
-
-        if (currentHourRate > 0 && lastHourRate > 0) {
-          return (avgRate * 0.45) + (currentHourRate * 0.35) + (lastHourRate * 0.20);
-        }
-        if (currentHourRate > 0) {
-          return (avgRate * 0.6) + (currentHourRate * 0.4);
-        }
-        if (lastHourRate > 0) {
-          return (avgRate * 0.7) + (lastHourRate * 0.3);
-        }
-        return avgRate;
+        void context;
+        return getAverageLinesPerHour(sector);
       }
 
       function getTotalSeparatedLines() {
@@ -4579,16 +5065,18 @@
       }
 
       function getProjectionRate() {
-        const totalSeparated = getTotalSeparatedLines();
-        const elapsedHours = getElapsedSimulationHours();
-        const avgRate = elapsedHours > 0 ? totalSeparated / elapsedHours : 0;
+        const activeSectors = state.sectors.filter((sector) => sector.linhasRestantes > 0.0001);
+        if (!activeSectors.length) return 0;
 
         if (state.timelineRateMode === "last-hour") {
-          const lastHourRate = sum(state.sectors, "producaoHoraAnterior");
-          if (lastHourRate > 0) return lastHourRate;
+          const lastWindowRate = activeSectors.reduce((acc, sector) =>
+            acc + (Number(sector.lphOperationalLastWindow) || 0), 0);
+          if (lastWindowRate > 0) return lastWindowRate;
         }
 
-        return avgRate;
+        const ewmaRate = activeSectors.reduce((acc, sector) =>
+          acc + (Number(sector.lphOperationalEwma) || 0), 0);
+        return ewmaRate;
       }
 
       function getTimelineWindowEnd(nowMinutes) {
@@ -4838,9 +5326,9 @@
         const shiftEnd = Math.max(getCurrentShiftEnd(now), now + 1);
         const end = Math.max(getTimelineWindowEnd(now), now + 1);
         const totalSpan = Math.max(end - start, 1);
-        const futureHours = Math.max((end - now) / 60, 0);
         const rate = Math.max(getProjectionRate(), 0);
-        const projectedAdd = Math.min(remaining, rate * futureHours);
+        const windowForecast = buildScopeForecastSeries("__total__", now, end);
+        const projectedAdd = Math.min(remaining, windowForecast.projectedLines);
         const projectedTotal = Math.min(total, separated + projectedAdd);
         const realPct = clamp((separated / total) * 100, 0, 100);
         const projectedPct = clamp((projectedTotal / total) * 100, 0, 100);
@@ -4849,9 +5337,10 @@
         const pastWidth = nowPos;
         const futureWidth = Math.max(100 - nowPos, 0);
 
-        const etaMinutes = rate > 0 && remaining > 0
-          ? now + ((remaining / rate) * 60)
-          : null;
+        const etaForecast = end >= shiftEnd
+          ? windowForecast
+          : buildScopeForecastSeries("__total__", now, shiftEnd);
+        const etaMinutes = remaining > 0 ? etaForecast.finishMinute : now;
         const etaInsideWindow = etaMinutes !== null && etaMinutes <= end;
 
         ui.timelinePastSegment.style.width = `${pastWidth.toFixed(2)}%`;
@@ -4873,7 +5362,10 @@
         ui.timelinePastValue.textContent = `${fmtInt(separated)} linhas`;
         ui.timelinePastSub.textContent = `${fmtPct(realPct)} concluido ate agora`;
         ui.timelineNowValue.textContent = formatSimulatedClock(now);
-        ui.timelineNowSub.textContent = `Ritmo ${fmtInt(rate)} l/h (${state.timelineRateMode === "last-hour" ? "ult. hora" : "media"})`;
+        const rateModeLabel = state.timelineRateMode === "last-hour"
+          ? "janela 60min"
+          : "ewma operacional";
+        ui.timelineNowSub.textContent = `Ritmo ${fmtInt(rate)} l/h (${rateModeLabel})`;
         ui.timelineFutureValue.textContent = `+${fmtInt(projectedAdd)} linhas`;
         ui.timelineFutureSub.textContent = `${fmtPct(projectedPct)} projetado ate ${formatSimulatedClock(end)}`;
 
@@ -4969,6 +5461,15 @@
 
       function computeForecastAccumValue(minute, context) {
         if (minute < context.nowMinute) return null;
+        if (Array.isArray(context.forecastSeries) && context.forecastSeries.length) {
+          const projectedExtra = getProducedAtMinute(context.forecastSeries, minute);
+          const projected = Math.max(0, context.producedNow + projectedExtra);
+          if (context.targetTotal > 0) {
+            return clamp(projected, 0, context.targetTotal);
+          }
+          return projected;
+        }
+
         if (!Number.isFinite(context.avgLPHNow) || context.avgLPHNow <= 0) return null;
         const workedHours = getWorkingMinutesBetween(context.nowMinute, minute) / 60;
         const projected = Math.max(0, context.producedNow + (context.avgLPHNow * workedHours));
@@ -5141,7 +5642,7 @@
           return;
         }
 
-        if (!Number.isFinite(summary.avgLPHNow) || summary.avgLPHNow <= 0) {
+        if (!summary.hasForecastNow) {
           ui.timelineSummaryEta.textContent = "Sem previsao";
           ui.timelineSummaryEtaSub.textContent = "Ritmo insuficiente para estimar fechamento.";
           return;
@@ -5177,27 +5678,19 @@
         const remainingBreakMinutes = getBreakMinutesBetween(nowMinute, shiftEnd);
         const requiredLines = Math.max(scope.targetTotal - scope.producedNow, 0);
         const avgLPHNow = getMovingAverageLPH(history, nowMinute, state.timelineHistoryWindowMinutes);
-        const hasForecastNow = requiredLines <= 0
-          || (Number.isFinite(avgLPHNow) && avgLPHNow > 0 && remainingWorkHours > 0);
-        const forecastRemainingLines = hasForecastNow && Number.isFinite(avgLPHNow) && avgLPHNow > 0
-          ? avgLPHNow * remainingWorkHours
-          : 0;
-        let forecastEndTotal = hasForecastNow
-          ? scope.producedNow + forecastRemainingLines
-          : null;
+        const scopeForecast = buildScopeForecastSeries(state.timelineHistorySector, nowMinute, shiftEnd);
+        const hasForecastNow = requiredLines <= 0 || (scopeForecast.projectedLines > 0);
+        let forecastEndTotal = hasForecastNow ? scope.producedNow + scopeForecast.projectedLines : null;
         if (Number.isFinite(forecastEndTotal) && scope.targetTotal > 0) {
           forecastEndTotal = clamp(forecastEndTotal, 0, scope.targetTotal);
         }
-        const forecastForStatus = Number.isFinite(forecastEndTotal) ? forecastEndTotal : scope.producedNow;
+        const forecastForStatus = Number.isFinite(forecastEndTotal)
+          ? forecastEndTotal
+          : scope.producedNow;
         const requiredLPHNow = requiredLines <= 0
           ? 0
           : (remainingWorkHours > 0 ? requiredLines / remainingWorkHours : null);
-        const finishMinute = getFinishEstimateMinute(
-          nowMinute,
-          requiredLines,
-          avgLPHNow,
-          shiftEnd
-        );
+        const finishMinute = requiredLines <= 0 ? nowMinute : scopeForecast.finishMinute;
         const workedSinceShiftStart = getWorkingMinutesBetween(shiftStart, nowMinute);
         const hasMinimumData = workedSinceShiftStart >= 5 || scope.producedNow > 0;
         const status = hasMinimumData
@@ -5217,6 +5710,7 @@
           finishMinute,
           requiredLines,
           forecastEndTotal: forecastForStatus,
+          hasForecastNow,
           targetTotal: scope.targetTotal,
           nowMinute,
           shiftEnd
@@ -5247,6 +5741,7 @@
           avgLPHNow,
           requiredLPHNow,
           forecastEndTotal,
+          forecastSeries: scopeForecast.series,
           remainingWorkHoursNow: remainingWorkHours,
           remainingBreakMinutesNow: remainingBreakMinutes,
           hasForecastNow,
@@ -5507,7 +6002,10 @@
 
         refs.linhasHora.textContent = `${fmtInt(linhasHoraMedia)} l/h`;
         const rateNeeded = Number.isFinite(statusMeta.requiredRate) ? `${fmtInt(statusMeta.requiredRate)} l/h` : "--";
-        refs.linhasHoraDot.title = `${statusMeta.label} | Atual ${fmtInt(statusMeta.effectiveRate)} l/h | Necessario ${rateNeeded}`;
+        const productiveRate = Number.isFinite(sector.lphProductiveEwma) && sector.lphProductiveEwma > 0
+          ? `${fmtInt(sector.lphProductiveEwma)} l/h`
+          : "--";
+        refs.linhasHoraDot.title = `${statusMeta.label} | LPH operacional ${fmtInt(statusMeta.effectiveRate)} l/h | LPH produtivo ${productiveRate} | Necessario ${rateNeeded}`;
         setStatusDotClass(refs.linhasHoraDot, statusMeta.dotClass || "dot-meta");
       }
 
@@ -5639,7 +6137,7 @@
           summary = [
             ["Progresso Geral", fmtPct((sum(list, "linhasSeparadas") / Math.max(1, sum(list, "linhasTotais"))) * 100)],
             ["Setores Concluidos", fmtInt(list.filter((sector) => sector.linhasRestantes <= 0).length)],
-            ["Media Linhas/h", `${fmtInt(sum(list, "linhasSeparadas") / Math.max(1 / 60, getElapsedSimulationHours()))} l/h`],
+            ["Media Linhas/h", `${fmtInt(list.reduce((acc, sector) => acc + getAverageLinesPerHour(sector), 0) / Math.max(1, list.length))} l/h`],
             ["Media Ult. Hora", fmtInt(sum(list, "producaoHoraAnterior") / Math.max(1, list.length))],
             ["Horario Simulado", formatSimulatedClock(state.simulatedMinutes)]
           ];
