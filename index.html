@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sincronismo - Simulador Sem Backend</title>
+  <title>Sincronismo - Torre de Controle Operacional</title>
   <style>
     :root {
       --bg-1: #0f172a;
@@ -2790,6 +2790,814 @@
         font-size: 1.02rem;
       }
     }
+
+    /* Tema visual de torre de controle operacional */
+    * {
+      letter-spacing: 0;
+    }
+
+    :root {
+      --ops-bg: #0b1117;
+      --ops-bg-2: #111923;
+      --ops-shell: #f3f6f9;
+      --ops-panel: #ffffff;
+      --ops-panel-soft: #f8fafc;
+      --ops-panel-muted: #eef3f8;
+      --ops-line: #d9e2ec;
+      --ops-line-strong: #bdcad8;
+      --ops-ink: #111827;
+      --ops-muted: #64748b;
+      --ops-muted-2: #8492a6;
+      --ops-accent: #0f766e;
+      --ops-accent-2: #0891b2;
+      --ops-blue: #2563eb;
+      --ops-green: #16a34a;
+      --ops-amber: #d97706;
+      --ops-red: #dc2626;
+      --ops-shadow: 0 20px 60px rgba(2, 8, 23, 0.22);
+      --ops-shadow-soft: 0 8px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    html {
+      background: var(--ops-bg);
+    }
+
+    body {
+      font-family: "Bahnschrift", "Aptos", "Segoe UI Variable", "Segoe UI", Arial, sans-serif;
+      background:
+        linear-gradient(rgba(148, 163, 184, 0.045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(148, 163, 184, 0.045) 1px, transparent 1px),
+        linear-gradient(135deg, #0a1016 0%, #101923 52%, #182230 100%);
+      background-size: 36px 36px, 36px 36px, auto;
+      color: var(--ops-ink);
+      padding: 16px;
+    }
+
+    .app {
+      max-width: 1540px;
+      background: var(--ops-shell);
+      border: 1px solid rgba(226, 232, 240, 0.22);
+      border-radius: 12px;
+      box-shadow: var(--ops-shadow);
+      padding: 12px;
+      overflow: hidden;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
+
+    .app::before {
+      display: none;
+    }
+
+    .header {
+      align-items: stretch;
+      background: linear-gradient(135deg, #0b1220 0%, #111827 55%, #172033 100%);
+      border: 1px solid rgba(148, 163, 184, 0.24);
+      border-radius: 8px;
+      box-shadow: none;
+      margin-bottom: 10px;
+      padding: 14px 16px;
+    }
+
+    .header::before {
+      height: 2px;
+      background: linear-gradient(90deg, var(--ops-accent), var(--ops-accent-2), #60a5fa);
+    }
+
+    .header h1 {
+      background: none;
+      color: #f8fafc;
+      font-size: 28px;
+      font-weight: 800;
+      text-transform: uppercase;
+      -webkit-text-fill-color: currentColor;
+    }
+
+    .header p {
+      color: #a9b8ca;
+      font-size: 13px;
+      font-weight: 500;
+      margin-top: 4px;
+    }
+
+    .header-actions {
+      align-items: center;
+    }
+
+    .btn {
+      border-radius: 8px;
+      box-shadow: none;
+      font-weight: 750;
+      padding: 9px 12px;
+      transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+    }
+
+    .btn::before {
+      display: none;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0f766e, #0891b2);
+      color: #ecfeff;
+      border: 1px solid rgba(45, 212, 191, 0.28);
+      box-shadow: none;
+    }
+
+    .btn-primary:hover {
+      box-shadow: none;
+    }
+
+    .btn-light {
+      background: rgba(248, 250, 252, 0.08);
+      border: 1px solid rgba(203, 213, 225, 0.24);
+      color: #e2e8f0;
+    }
+
+    .btn-light:hover {
+      background: rgba(248, 250, 252, 0.14);
+      box-shadow: none;
+    }
+
+    .sim-panel .btn-light,
+    .operation-timeline .btn-light,
+    .modal-body .btn-light,
+    .table-container .btn-light {
+      background: #ffffff;
+      border: 1px solid var(--ops-line-strong);
+      color: var(--ops-ink);
+    }
+
+    .sim-panel .btn-light:hover,
+    .operation-timeline .btn-light:hover,
+    .modal-body .btn-light:hover,
+    .table-container .btn-light:hover {
+      background: #f1f5f9;
+      border-color: var(--ops-accent-2);
+    }
+
+    .btn-danger {
+      background: #b91c1c;
+      border: 1px solid rgba(248, 113, 113, 0.28);
+      box-shadow: none;
+    }
+
+    .btn-danger:hover {
+      box-shadow: none;
+    }
+
+    .sim-panel,
+    .operation-timeline,
+    .table-container,
+    .modal-card {
+      background: var(--ops-panel);
+      border: 1px solid var(--ops-line);
+      border-radius: 8px;
+      box-shadow: none;
+    }
+
+    .sim-panel {
+      gap: 8px;
+      margin-bottom: 10px;
+      padding: 10px;
+    }
+
+    .sim-panel.is-collapsed {
+      padding: 8px 10px;
+    }
+
+    .sim-box {
+      background: var(--ops-panel-soft);
+      border: 1px solid var(--ops-line);
+      border-left: 3px solid var(--ops-line-strong);
+      border-radius: 8px;
+      box-shadow: none;
+      min-height: 86px;
+      padding: 10px;
+    }
+
+    .sim-box:hover {
+      border-color: var(--ops-line-strong);
+      box-shadow: none;
+      transform: none;
+    }
+
+    .sim-label,
+    .timeline-chip .chip-label,
+    .timeline-history-item .label,
+    .timeline-history-kpi .label,
+    .stat-title,
+    .chart-kpi-label,
+    .chart-sector-tag {
+      color: var(--ops-muted);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .sim-value,
+    .stat-number,
+    .timeline-chip .chip-value,
+    .timeline-history-item .value,
+    .timeline-history-kpi .value,
+    .chart-kpi-value,
+    .number-cell,
+    .progress-label {
+      font-family: "Cascadia Mono", "IBM Plex Mono", "Consolas", monospace;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .sim-value {
+      color: var(--ops-ink);
+      font-size: 19px;
+      font-weight: 800;
+    }
+
+    .sim-actions select,
+    .sim-config-grid input,
+    .sim-config-grid select,
+    .timeline-controls select,
+    .timeline-history-controls select,
+    .ui-select,
+    .search-box input {
+      background: #ffffff;
+      border: 1px solid var(--ops-line-strong);
+      border-radius: 6px;
+      box-shadow: none;
+      color: var(--ops-ink);
+      min-height: 34px;
+    }
+
+    .sim-actions select:focus,
+    .sim-config-grid input:focus,
+    .sim-config-grid select:focus,
+    .timeline-controls select:focus,
+    .timeline-history-controls select:focus,
+    .ui-select:focus,
+    .search-box input:focus {
+      border-color: var(--ops-accent-2);
+      box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.16);
+      outline: none;
+    }
+
+    .operation-timeline {
+      margin-bottom: 10px;
+      padding: 12px;
+    }
+
+    .timeline-head {
+      border-bottom: 1px solid var(--ops-line);
+      margin-bottom: 10px;
+      padding-bottom: 10px;
+    }
+
+    .timeline-head h2,
+    .table-title h2 {
+      color: var(--ops-ink);
+      font-size: 18px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .timeline-head p,
+    .table-title p {
+      color: var(--ops-muted);
+      font-size: 12px;
+    }
+
+    .timeline-controls {
+      margin-bottom: 10px;
+    }
+
+    .timeline-controls label,
+    .timeline-history-controls label,
+    .sim-config-grid label,
+    .difficulty-wrap label {
+      color: var(--ops-muted);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .timeline-overview {
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .timeline-chip {
+      background: var(--ops-panel-soft);
+      border: 1px solid var(--ops-line);
+      border-radius: 8px;
+      box-shadow: none;
+      padding: 11px;
+    }
+
+    .timeline-chip .chip-value {
+      color: var(--ops-ink);
+      font-size: 20px;
+    }
+
+    .timeline-chip .chip-sub,
+    .timeline-history-item .sub,
+    .timeline-history-kpi .sub {
+      color: var(--ops-muted);
+      font-size: 11px;
+    }
+
+    .timeline-stage,
+    .timeline-history,
+    .timeline-history-item,
+    .timeline-history-kpi,
+    .timeline-history-chart {
+      background: #fbfdff;
+      border: 1px solid var(--ops-line);
+      border-radius: 8px;
+      box-shadow: none;
+    }
+
+    .timeline-track,
+    .timeline-progress {
+      background: #dbe3ec;
+      border-radius: 999px;
+      box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.14);
+    }
+
+    .timeline-segment.past {
+      background: linear-gradient(90deg, #0f766e, #0891b2);
+    }
+
+    .timeline-segment.future {
+      background: #e7edf4;
+    }
+
+    .timeline-progress-real {
+      background: linear-gradient(90deg, #2563eb, #0891b2);
+    }
+
+    .timeline-progress-proj {
+      background: repeating-linear-gradient(
+        45deg,
+        rgba(22, 163, 74, 0.86) 0,
+        rgba(22, 163, 74, 0.86) 7px,
+        rgba(34, 197, 94, 0.44) 7px,
+        rgba(34, 197, 94, 0.44) 14px
+      );
+    }
+
+    .timeline-now-marker {
+      background: #0f172a;
+      box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.14);
+    }
+
+    .timeline-completion-marker {
+      background: var(--ops-green);
+      box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.16);
+    }
+
+    .timeline-status-pill,
+    .status-badge,
+    .chart-sector-tag,
+    .f-btn {
+      border-radius: 6px;
+    }
+
+    .stats {
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .stat-card {
+      background: var(--ops-panel);
+      border: 1px solid var(--ops-line);
+      border-radius: 8px;
+      box-shadow: none;
+      min-height: 104px;
+      padding: 13px;
+    }
+
+    .stat-card::before,
+    .stat-card::after {
+      display: none;
+    }
+
+    .stat-card:hover {
+      border-color: var(--ops-line-strong);
+      box-shadow: var(--ops-shadow-soft);
+      transform: translateY(-1px);
+    }
+
+    .stat-icon {
+      border-radius: 8px;
+      box-shadow: none;
+      height: 42px;
+      width: 42px;
+    }
+
+    .stat-icon-primary,
+    .stat-icon-success,
+    .stat-icon-warning,
+    .stat-icon-info {
+      background: #eef6ff;
+      border: 1px solid #cfe2ff;
+      color: var(--ops-blue);
+    }
+
+    .stat-icon-success {
+      background: #ecfdf3;
+      border-color: #bbf7d0;
+      color: var(--ops-green);
+    }
+
+    .stat-icon-warning {
+      background: #fffbeb;
+      border-color: #fde68a;
+      color: var(--ops-amber);
+    }
+
+    .stat-icon-info {
+      background: #ecfeff;
+      border-color: #a5f3fc;
+      color: var(--ops-accent-2);
+    }
+
+    .stat-number {
+      color: var(--ops-ink);
+      font-size: 28px;
+      line-height: 1;
+    }
+
+    .ring-wrap {
+      box-shadow: none;
+      height: 58px;
+      width: 58px;
+    }
+
+    .table-container {
+      padding: 10px;
+    }
+
+    .table-header {
+      border-bottom: 1px solid var(--ops-line);
+      margin-bottom: 10px;
+      padding: 0 0 10px;
+    }
+
+    .search-box {
+      background: var(--ops-panel-soft);
+      border: 1px solid var(--ops-line);
+      border-radius: 8px;
+      box-shadow: none;
+    }
+
+    .search-box svg {
+      color: var(--ops-muted);
+    }
+
+    .table-container .table-wrapper,
+    #detailModal .table-wrap {
+      border: 1px solid var(--ops-line);
+      border-radius: 8px;
+      box-shadow: none;
+    }
+
+    .table-container .table-wrapper::before {
+      display: none;
+    }
+
+    .table-container th,
+    #detailModal .table-wrap th {
+      background: #111827;
+      border-bottom: 1px solid #243244;
+      color: #cbd5e1;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 11px 10px;
+      position: sticky;
+      text-transform: uppercase;
+      top: 0;
+      z-index: 2;
+    }
+
+    .table-container th:hover {
+      background: #162033;
+    }
+
+    .table-container td,
+    #detailModal .table-wrap td {
+      background: #ffffff;
+      border-bottom: 1px solid #e6edf4;
+      color: var(--ops-ink);
+      padding: 10px;
+    }
+
+    .table-container tbody tr:nth-child(even) td {
+      background: #f9fbfd;
+    }
+
+    .table-container tbody tr:hover td {
+      background: #eef7ff;
+      box-shadow: none;
+    }
+
+    .table-container tbody tr::after,
+    .table-container tbody tr:hover::after {
+      display: none;
+    }
+
+    .sector-cell-container {
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      padding: 0;
+    }
+
+    .sector-avatar {
+      background: linear-gradient(135deg, #0f766e, #0891b2);
+      border-radius: 7px;
+      box-shadow: none;
+      color: #ecfeff;
+      height: 32px;
+      width: 32px;
+    }
+
+    .sector-avatar::before {
+      display: none;
+    }
+
+    .sector-name {
+      color: var(--ops-ink);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .sector-code,
+    .description-cell {
+      color: var(--ops-muted);
+    }
+
+    .progress-container {
+      background: #e2e8f0;
+      border-radius: 6px;
+      box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.12);
+      height: 18px;
+    }
+
+    .progress-bar {
+      border-radius: 6px;
+      box-shadow: none;
+    }
+
+    .status-badge {
+      box-shadow: none;
+      font-weight: 800;
+      padding: 4px 7px;
+    }
+
+    .status-high {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .status-medium {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .status-low {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .status-meta {
+      background: #e2e8f0;
+      color: #475569;
+    }
+
+    .chart-row {
+      background: var(--ops-panel-soft);
+      border: 1px solid var(--ops-line);
+      border-radius: 8px;
+      box-shadow: none;
+    }
+
+    .chart-row:hover {
+      box-shadow: var(--ops-shadow-soft);
+      transform: none;
+    }
+
+    .chart-track {
+      background: #e2e8f0;
+      border-radius: 6px;
+    }
+
+    .chart-track i {
+      background: linear-gradient(90deg, #2563eb, #0891b2);
+      border-radius: 6px;
+    }
+
+    .chart-filters {
+      gap: 6px;
+    }
+
+    .f-btn {
+      background: #f1f5f9;
+      border: 1px solid var(--ops-line);
+      color: var(--ops-muted);
+    }
+
+    .f-btn.active {
+      background: #111827;
+      border-color: #111827;
+      color: #f8fafc;
+    }
+
+    .modal {
+      background: rgba(2, 6, 23, 0.68);
+    }
+
+    .modal-card {
+      border-radius: 8px;
+      box-shadow: 0 24px 80px rgba(2, 6, 23, 0.38);
+    }
+
+    .modal-head {
+      background: #111827;
+      border-bottom: 1px solid #243244;
+    }
+
+    .modal-head h3 {
+      color: #f8fafc;
+    }
+
+    .modal-head p {
+      color: #94a3b8;
+    }
+
+    .modal-close {
+      background: #1f2937;
+      border-radius: 7px;
+      color: #e5e7eb;
+    }
+
+    .summary-row.modal-stats-summary .sum-box {
+      border-radius: 8px;
+      box-shadow: none;
+    }
+
+    .timestamp {
+      color: #cbd5e1;
+      margin: 10px 2px 0;
+    }
+
+    .header {
+      background: #ffffff;
+      border-color: var(--ops-line);
+      box-shadow: none;
+    }
+
+    .header::before {
+      background: linear-gradient(90deg, #334155, #64748b);
+      height: 2px;
+    }
+
+    .header h1 {
+      color: var(--ops-ink);
+      font-size: 25px;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
+    .header p {
+      color: var(--ops-muted);
+    }
+
+    .header .btn-light {
+      background: #f8fafc;
+      border-color: var(--ops-line-strong);
+      color: var(--ops-ink);
+    }
+
+    .header .btn-light:hover {
+      background: #eef2f7;
+      border-color: #94a3b8;
+    }
+
+    .timeline-overview {
+      background: #f8fafc;
+      border: 1px solid var(--ops-line);
+      border-radius: 8px;
+      gap: 8px;
+      padding: 8px;
+    }
+
+    .timeline-chip {
+      background: #ffffff;
+      border-color: #e2e8f0;
+      border-left: 3px solid #cbd5e1;
+      padding: 10px 12px;
+    }
+
+    .timeline-chip:nth-child(1) {
+      border-left-color: #64748b;
+    }
+
+    .timeline-chip:nth-child(2) {
+      border-left-color: #0f766e;
+    }
+
+    .timeline-chip:nth-child(3) {
+      border-left-color: #2563eb;
+    }
+
+    .timeline-chip:nth-child(4) {
+      border-left-color: #d97706;
+    }
+
+    .timeline-chip .chip-value {
+      font-size: 18px;
+    }
+
+    .stat-card {
+      transition: border-color 0.16s ease, background-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+    }
+
+    .stat-card:hover {
+      background: #fbfdff;
+      border-color: #cbd5e1;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
+      transform: translateY(-1px);
+    }
+
+    .stat-card:hover .stat-icon {
+      box-shadow: none;
+      transform: none;
+    }
+
+    .table-container .th-content {
+      transition: color 0.14s ease;
+    }
+
+    .table-container .th-content:hover .sort-icon {
+      color: #94a3b8;
+      opacity: 0.85;
+      transform: none;
+    }
+
+    .table-container th:hover {
+      background: #152033;
+      color: #e2e8f0;
+    }
+
+    .table-container th.sorted {
+      background: #172235;
+      color: #e2e8f0;
+      box-shadow: inset 0 -2px 0 #64748b;
+    }
+
+    .table-container th.sorted .sort-icon {
+      color: #94a3b8;
+      opacity: 0.9;
+      transform: none;
+    }
+
+    .table-container th.sorted-asc .sort-icon {
+      transform: rotate(180deg);
+    }
+
+    .table-container th.sorted-desc .sort-icon {
+      transform: rotate(0deg);
+    }
+
+    @media (max-width: 740px) {
+      body {
+        padding: 10px;
+      }
+
+      .app {
+        border-radius: 10px;
+      }
+
+      .header h1 {
+        font-size: 23px;
+      }
+
+      .sim-box {
+        min-height: auto;
+      }
+
+      .table-container th,
+      .table-container td {
+        padding: 8px 7px;
+      }
+
+      .stat-card {
+        min-height: 92px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -2797,7 +3605,7 @@
     <header class="header">
       <div>
         <h1>Sincronismo</h1>
-        <p>Acompanhamento do sincronismo da Separacao por setor</p>
+        <p>Acompanhamento operacional da separação por setor</p>
       </div>
       <div class="header-actions">
         <button class="btn btn-light btn-config" id="configToggleBtn" aria-expanded="true" type="button">
@@ -2811,13 +3619,13 @@
           </svg>
           <span class="btn-label" id="configToggleLabel">Ocultar Config.</span>
         </button>
-        <button class="btn btn-primary" id="chartBtn">Graficos</button>
+        <button class="btn btn-primary" id="chartBtn">Gráficos</button>
       </div>
     </header>
 
     <section class="sim-panel">
       <div class="sim-box">
-        <div class="sim-label">Horario Simulado</div>
+        <div class="sim-label">Horário Simulado</div>
         <div class="sim-value" id="simClock">D1 05:00</div>
       </div>
       <div class="sim-box">
@@ -2825,16 +3633,16 @@
         <div class="sim-value" id="speedLabel">1h = 1min</div>
       </div>
       <div class="sim-box">
-        <div class="sim-label">Hora de Referencia</div>
+        <div class="sim-label">Hora de Referência</div>
         <div class="sim-value" id="hourRef">05:00</div>
       </div>
       <div class="sim-box">
         <div class="sim-label">Controles</div>
         <div class="sim-actions">
           <select id="speedSelect" aria-label="Velocidade">
-            <option value="60">1h de producao = 1min real</option>
-            <option value="30">1h de producao = 30s real</option>
-            <option value="10">1h de producao = 10s real</option>
+            <option value="60">1h de produção = 1min real</option>
+            <option value="30">1h de produção = 30s real</option>
+            <option value="10">1h de produção = 10s real</option>
           </select>
           <button class="btn btn-light" id="runPauseBtn">Pausar</button>
           <button class="btn btn-danger" id="resetBtn">Reiniciar</button>
@@ -2844,7 +3652,7 @@
         <div class="sim-label">Jornada de Trabalho</div>
         <div class="sim-config-grid two">
           <label>
-            Inicio
+            Início
             <input id="workStartInput" type="time" value="05:00">
           </label>
           <label>
@@ -2852,13 +3660,13 @@
             <input id="workEndInput" type="time" value="14:00">
           </label>
         </div>
-        <div class="sim-helper status-run" id="shiftStatus">Em operacao</div>
+        <div class="sim-helper status-run" id="shiftStatus">Em operação</div>
       </div>
       <div class="sim-box sim-config-box">
-        <div class="sim-label">Horario de Almoco</div>
+        <div class="sim-label">Horário de Almoço</div>
         <div class="sim-config-grid two">
           <label>
-            Inicio
+            Início
             <input id="lunchStartInput" type="time" value="11:30">
           </label>
           <label>
@@ -2866,10 +3674,10 @@
             <input id="lunchEndInput" type="time" value="12:30">
           </label>
         </div>
-        <div class="sim-helper">Sem producao no intervalo.</div>
+        <div class="sim-helper">Sem produção no intervalo.</div>
       </div>
       <div class="sim-box sim-config-box">
-        <div class="sim-label">Distribuicao da Demanda (%)</div>
+        <div class="sim-label">Distribuição da Demanda (%)</div>
         <div class="sim-config-grid three">
           <label>
             Frac.
@@ -2895,12 +3703,12 @@
           <div class="difficulty-wrap">
             <label for="difficultySelect">Dificuldade</label>
             <select id="difficultySelect" class="ui-select" aria-label="Dificuldade da demanda">
-              <option value="random" selected>Aleatorio (padrao)</option>
-              <option value="very_hard">Muito dificil</option>
-              <option value="hard">Dificil</option>
-              <option value="medium">Media</option>
-              <option value="easy">Facil</option>
-              <option value="very_easy">Muito facil</option>
+              <option value="random" selected>Aleatório (padrão)</option>
+              <option value="very_hard">Muito difícil</option>
+              <option value="hard">Difícil</option>
+              <option value="medium">Média</option>
+              <option value="easy">Fácil</option>
+              <option value="very_easy">Muito fácil</option>
             </select>
           </div>
         </div>
@@ -2925,8 +3733,8 @@
     <section class="operation-timeline">
       <div class="timeline-head">
         <div>
-          <h2>Linha do Tempo da Operacao</h2>
-          <p>Leitura unica de passado (real), presente (agora) e futuro (projecao pela media atual).</p>
+          <h2>Linha do Tempo da Operação</h2>
+          <p>Leitura única de passado realizado, presente operacional e futuro projetado pela média atual.</p>
         </div>
       </div>
 
@@ -2934,17 +3742,17 @@
         <label>
           Janela de Futuro
           <select id="timelineHorizonSelect" aria-label="Janela de futuro da linha do tempo">
-            <option value="120">Proximas 2 horas</option>
-            <option value="240">Proximas 4 horas</option>
-            <option value="480">Proximas 8 horas</option>
-            <option value="shift-end">Ate fim da jornada</option>
+            <option value="120">Próximas 2 horas</option>
+            <option value="240">Próximas 4 horas</option>
+            <option value="480">Próximas 8 horas</option>
+            <option value="shift-end">Até fim da jornada</option>
           </select>
         </label>
         <label>
-          Base da Projecao
-          <select id="timelineRateModeSelect" aria-label="Base de calculo da projecao">
-            <option value="avg">Media acumulada</option>
-            <option value="last-hour">Ultima hora util</option>
+          Base da Projeção
+          <select id="timelineRateModeSelect" aria-label="Base de cálculo da projeção">
+            <option value="avg">Média acumulada</option>
+            <option value="last-hour">Última hora útil</option>
           </select>
         </label>
       </div>
@@ -2953,7 +3761,7 @@
         <article class="timeline-chip">
           <span class="chip-label">Passado</span>
           <span class="chip-value" id="timelinePastValue">0 linhas</span>
-          <span class="chip-sub" id="timelinePastSub">0,0% concluido</span>
+          <span class="chip-sub" id="timelinePastSub">0,0% concluído</span>
         </article>
         <article class="timeline-chip">
           <span class="chip-label">Presente</span>
@@ -2966,8 +3774,8 @@
           <span class="chip-sub" id="timelineFutureSub">0,0% projetado</span>
         </article>
         <article class="timeline-chip">
-          <span class="chip-label">ETA Conclusao</span>
-          <span class="chip-value" id="timelineEtaValue">Sem previsao</span>
+          <span class="chip-label">ETA Conclusão</span>
+          <span class="chip-value" id="timelineEtaValue">Sem previsão</span>
           <span class="chip-sub" id="timelineEtaSub">Necessita ritmo maior</span>
         </article>
       </div>
@@ -2986,7 +3794,7 @@
           <span id="timelineEndLabel">Fim: 09:00</span>
         </div>
 
-        <p class="timeline-stage-title">Progresso de producao</p>
+        <p class="timeline-stage-title">Progresso de produção</p>
         <div class="timeline-progress">
           <span class="timeline-progress-real" id="timelineRealProgress"></span>
           <span class="timeline-progress-proj" id="timelineProjectedProgress"></span>
@@ -2995,12 +3803,12 @@
           <span><i class="dot-past"></i>Passado realizado</span>
           <span><i class="dot-now"></i>Momento atual</span>
           <span><i class="dot-future"></i>Janela futura</span>
-          <span><i class="dot-proj"></i>Projecao mantendo media</span>
+          <span><i class="dot-proj"></i>Projeção mantendo média</span>
         </div>
 
         <div class="timeline-history" id="timelineHistoryCard">
           <div class="timeline-history-top">
-            <div class="timeline-history-head">Historico de Tendencia</div>
+            <div class="timeline-history-head">Histórico de Tendência</div>
             <button class="btn btn-light btn-mini timeline-history-toggle" id="timelineHistoryToggleBtn" type="button">Expandir</button>
           </div>
 
@@ -3008,16 +3816,16 @@
             <article class="timeline-history-item">
               <span class="label">Status</span>
               <span class="value"><span class="timeline-status-pill off" id="timelineSummaryStatus">Sem dados</span></span>
-              <span class="sub" id="timelineSummaryStatusSub">Aguardando producao minima.</span>
+              <span class="sub" id="timelineSummaryStatusSub">Aguardando produção mínima.</span>
             </article>
             <article class="timeline-history-item">
-              <span class="label">Media Atual (LPH)</span>
+              <span class="label">Média Atual (LPH)</span>
               <span class="value" id="timelineSummaryAvg">-- l/h</span>
               <span class="sub" id="timelineSummaryAvgSub">Janela movel: 60 min</span>
             </article>
             <article class="timeline-history-item">
-              <span class="label">Previsao de Fechamento</span>
-              <span class="value" id="timelineSummaryEta">Sem previsao</span>
+              <span class="label">Previsão de Fechamento</span>
+              <span class="value" id="timelineSummaryEta">Sem previsão</span>
               <span class="sub" id="timelineSummaryEtaSub">Sem ritmo suficiente no momento.</span>
             </article>
           </div>
@@ -3029,22 +3837,22 @@
                 <select id="timelineHistorySectorSelect" aria-label="Setor do historico de tendencia"></select>
               </label>
               <label>
-                Janela Media
-                <select id="timelineHistoryWindowSelect" aria-label="Janela da media movel">
+                Janela Média
+                <select id="timelineHistoryWindowSelect" aria-label="Janela da média móvel">
                   <option value="30">30 min</option>
                   <option value="60" selected>60 min</option>
                   <option value="90">90 min</option>
                 </select>
               </label>
               <label>
-                Exibicao
+                Exibição
                 <select id="timelineHistoryModeSelect" aria-label="Tipo de grafico do historico">
                   <option value="accumulated" selected>Acumulado</option>
                   <option value="interval">Intervalo (LPH)</option>
                 </select>
               </label>
               <label>
-                Limite Atencao
+                Limite Atenção
                 <select id="timelineStatusToleranceSelect" aria-label="Limite percentual de atencao">
                   <option value="0.03">3%</option>
                   <option value="0.05" selected>5%</option>
@@ -3061,26 +3869,26 @@
                 <span class="sub" id="timelineKpiDeltaSub">Sem dados</span>
               </article>
               <article class="timeline-history-kpi">
-                <span class="label">LPH Atual / Necessario</span>
+                <span class="label">LPH Atual / Necessário</span>
                 <span class="value" id="timelineKpiRatesValue">-- / --</span>
                 <span class="sub" id="timelineKpiRatesSub">Sem dados</span>
               </article>
               <article class="timeline-history-kpi">
-                <span class="label">Previsao de Fechamento</span>
-                <span class="value" id="timelineKpiForecastValue">Sem previsao</span>
+                <span class="label">Previsão de Fechamento</span>
+                <span class="value" id="timelineKpiForecastValue">Sem previsão</span>
                 <span class="sub" id="timelineKpiForecastSub">Sem ritmo suficiente.</span>
               </article>
             </div>
 
             <div class="timeline-history-chart">
-              <canvas id="timelineHistoryCanvas" aria-label="Historico de producao"></canvas>
+              <canvas id="timelineHistoryCanvas" aria-label="Histórico de produção"></canvas>
               <div class="timeline-history-tooltip" id="timelineHistoryTooltip"></div>
             </div>
             <div class="timeline-history-legend-inline">
-              <span><i class="dot dot-real"></i>Producao Real</span>
-              <span><i class="dot dot-meta"></i>Meta Dinamica</span>
-              <span><i class="dot dot-forecast"></i>Previsao</span>
-              <span><i class="dot dot-break"></i>Pausa / Almoco</span>
+              <span><i class="dot dot-real"></i>Produção Real</span>
+              <span><i class="dot dot-meta"></i>Meta Dinâmica</span>
+              <span><i class="dot dot-forecast"></i>Previsão</span>
+              <span><i class="dot dot-break"></i>Pausa / Almoço</span>
             </div>
           </div>
         </div>
@@ -3134,7 +3942,7 @@
           </svg>
         </div>
         <div class="stat-content">
-          <div class="stat-title">% Concluido</div>
+          <div class="stat-title">% Concluído</div>
           <div class="stat-number" id="kpiPct">0%</div>
         </div>
         <div class="ring-wrap" id="progressRing"><span id="ringText">0%</span></div>
@@ -3145,7 +3953,7 @@
       <div class="table-header table-head">
         <div class="table-title">
           <h2>Detalhes por Setor</h2>
-          <p>Modelo visual do sincronismo com dados ficticios simulados.</p>
+          <p>Modelo visual do sincronismo com dados fictícios simulados.</p>
         </div>
         <div class="table-actions">
           <div class="search-box">
@@ -3172,7 +3980,7 @@
               </th>
               <th data-sort="descricao">
                 <div class="th-content">
-                  <span>Descricao</span>
+                  <span>Descrição</span>
                   <svg class="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M8 9l4-4 4 4"></path>
                     <path d="m16 15-4 4-4-4"></path>
@@ -3567,22 +4375,20 @@
           const x = xScale.getPixelForValue(xValue);
           if (!Number.isFinite(x)) return;
 
-          const width = 54;
-
           ctx.save();
-          ctx.fillStyle = "rgba(255, 255, 255, 0.34)";
+          ctx.fillStyle = "rgba(8, 145, 178, 0.08)";
           ctx.fillRect(
-            chartArea.left,
+            x - 8,
             chartArea.top,
-            chartArea.right - chartArea.left,
+            16,
             chartArea.bottom - chartArea.top
           );
-          ctx.clearRect(
-            x - (width / 2),
-            chartArea.top,
-            width,
-            chartArea.bottom - chartArea.top
-          );
+          ctx.strokeStyle = "rgba(15, 118, 110, 0.55)";
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(x, chartArea.top);
+          ctx.lineTo(x, chartArea.bottom);
+          ctx.stroke();
           ctx.restore();
         }
       };
@@ -3772,6 +4578,18 @@
             ui.detailModal.classList.remove("show");
           }
         });
+
+        ui.timelineHistoryCanvas.addEventListener("mouseleave", () => {
+          if (ui.timelineHistoryTooltip) {
+            ui.timelineHistoryTooltip.classList.remove("show");
+          }
+
+          const chart = state.timelineHistoryChart;
+          if (chart && chart.options && chart.options.plugins && chart.options.plugins.timelineHoverFocus) {
+            chart.options.plugins.timelineHoverFocus.xValue = null;
+            chart.draw();
+          }
+        });
       }
 
       function toggleRunPause() {
@@ -3801,7 +4619,7 @@
       function populateTimelineHistorySectorSelect() {
         const selected = state.timelineHistorySector;
         const options = [
-          `<option value="__total__">Operacao Total</option>`,
+          `<option value="__total__">Operação Total</option>`,
           ...state.sectors.map((sector) =>
             `<option value="${escapeHtml(sector.setor)}">${escapeHtml(sector.setor)} - ${escapeHtml(sector.descricao)}</option>`
           )
@@ -3829,7 +4647,7 @@
           data: {
             datasets: [
               {
-                label: "Producao Real",
+                label: "Produção Real",
                 data: [],
                 parsing: false,
                 borderColor: "#2563eb",
@@ -3843,7 +4661,7 @@
                 cubicInterpolationMode: "monotone"
               },
               {
-                label: "Meta Dinamica",
+                label: "Meta Dinâmica",
                 data: [],
                 parsing: false,
                 borderColor: "#f59e0b",
@@ -3857,7 +4675,7 @@
                 cubicInterpolationMode: "monotone"
               },
               {
-                label: "Previsao",
+                label: "Previsão",
                 data: [],
                 parsing: false,
                 borderColor: "#10b981",
@@ -4016,7 +4834,7 @@
             ? "ok"
             : (deltaPct <= state.timelineStatusTolerancePct ? "warn" : "critical"));
         const deltaText = !hasDiff
-          ? "Sem referencia"
+          ? "Sem referência"
           : (diffValue >= 0
             ? `+${fmtInt(Math.abs(diffValue))} adiantado`
             : `-${fmtInt(Math.abs(diffValue))} atrasado`);
@@ -4028,7 +4846,7 @@
         const hasForecast = Number.isFinite(scopeContext.forecastEndTotal);
         const forecastEndText = hasForecast
           ? `${fmtInt(scopeContext.forecastEndTotal)} linhas`
-          : "Sem previsao";
+          : "Sem previsão";
         const forecastGap = hasTarget && hasForecast
           ? Math.max(scopeContext.targetTotal - scopeContext.forecastEndTotal, 0)
           : null;
@@ -4052,7 +4870,7 @@
 
         let html = `
           <div class="t-head">
-            <span class="t-time">Horario: ${escapeHtml(formatSimulatedClock(metrics.minute))}</span>
+            <span class="t-time">Horário: ${escapeHtml(formatSimulatedClock(metrics.minute))}</span>
             ${activeBreak ? `<span class="t-badge">PAUSA (${escapeHtml(activeBreak.label)})</span>` : ""}
           </div>
         `;
@@ -4060,16 +4878,16 @@
         if (hasTarget) {
           html += `
             <div class="t-section">
-              <div class="t-title">Acumulado ate o momento</div>
+              <div class="t-title">Acumulado até o momento</div>
               <div class="t-row"><span>Produzido (Acumulado)</span><strong>${fmtInt(metrics.producedAt)} linhas</strong></div>
               <div class="t-row"><span>Meta (Acumulada)</span><strong>${Number.isFinite(metrics.metaAccum) ? `${fmtInt(metrics.metaAccum)} linhas` : "--"}</strong></div>
-              <div class="t-row t-delta"><span>Diferenca</span><strong class="${deltaClass}">${deltaText}</strong></div>
+              <div class="t-row t-delta"><span>Diferença</span><strong class="${deltaClass}">${deltaText}</strong></div>
             </div>
           `;
         } else {
           html += `
             <div class="t-section">
-              <div class="t-title">Acumulado ate o momento</div>
+              <div class="t-title">Acumulado até o momento</div>
               <div class="t-row"><span>Produzido</span><strong>${fmtInt(metrics.producedAt)} linhas</strong></div>
             </div>
           `;
@@ -4077,10 +4895,10 @@
 
         html += `
           <div class="t-section">
-            <div class="t-title">Ritmo e previsao</div>
-            <div class="t-row"><span>LPH Medio</span><strong>${avgLPHText}</strong></div>
-            ${hasTarget ? `<div class="t-row"><span>LPH Necessario (agora)</span><strong>${reqLPHText}</strong></div>` : ""}
-            <div class="t-row"><span>Previsao no fim</span><strong>${forecastEndText}</strong></div>
+            <div class="t-title">Ritmo e previsão</div>
+            <div class="t-row"><span>LPH Médio</span><strong>${avgLPHText}</strong></div>
+            ${hasTarget ? `<div class="t-row"><span>LPH Necessário (agora)</span><strong>${reqLPHText}</strong></div>` : ""}
+            <div class="t-row"><span>Previsão no fim</span><strong>${forecastEndText}</strong></div>
             ${hasTarget ? `<div class="t-row"><span>Falta para meta no fim</span><strong>${forecastGapText}</strong></div>` : ""}
           </div>
           <div class="t-section">
@@ -4093,7 +4911,7 @@
         if (activeBreak) {
           html += `<div class="hint">Pausa ativa: meta nao avanca neste intervalo.</div>`;
         } else if (lowTimeAlert) {
-          html += `<div class="hint">Atencao: pouco tempo restante para correcao de ritmo.</div>`;
+          html += `<div class="hint">Atenção: pouco tempo restante para correção de ritmo.</div>`;
         }
 
         tooltipEl.innerHTML = html;
@@ -4176,7 +4994,7 @@
       }
 
       function flashReset() {
-        ui.timestamp.textContent = "Simulacao reiniciada com novos dados ficticios.";
+        ui.timestamp.textContent = "Simulação reiniciada com novos dados fictícios.";
         setTimeout(() => renderTimestamp(), 800);
       }
 
@@ -4306,8 +5124,8 @@
         const inWork = isTimeInRange(minuteOfDay, state.config.workStartMin, state.config.workEndMin);
         if (!inWork) return { label: "Fora da jornada", className: "status-off" };
         const inLunch = isScheduledBreakMinute(minuteOfDay);
-        if (inLunch) return { label: "Em almoco", className: "status-break" };
-        return { label: "Em operacao", className: "status-run" };
+        if (inLunch) return { label: "Em almoço", className: "status-break" };
+        return { label: "Em operação", className: "status-run" };
       }
 
       function getDistributionCategoryKey(setor) {
@@ -5188,9 +6006,9 @@
         sector.pesoRestante = round2(Math.max(0, sector.pesoPrevisto - sector.pesoSeparado));
 
         const remainRatio = sector.linhasTotais > 0 ? sector.linhasRestantes / sector.linhasTotais : 0;
-        if (sector.linhasRestantes === 0) sector.prioridade = "Concluido";
+        if (sector.linhasRestantes === 0) sector.prioridade = "Concluído";
         else if (remainRatio >= 0.50) sector.prioridade = "Alta";
-        else if (remainRatio >= 0.20) sector.prioridade = "Media";
+        else if (remainRatio >= 0.20) sector.prioridade = "Média";
         else sector.prioridade = "Baixa";
       }
 
@@ -5199,7 +6017,7 @@
 
         if (sector.linhasRestantes <= 0) {
           return {
-            label: "Concluido",
+            label: "Concluído",
             chipClass: "c-ok",
             badgeClass: "status-high",
             dotClass: "dot-high",
@@ -5235,7 +6053,7 @@
 
         if (remainingHours <= 0) {
           return {
-            label: "Pessimo",
+            label: "Péssimo",
             chipClass: "c-bad",
             badgeClass: "status-low",
             dotClass: "dot-low",
@@ -5318,7 +6136,7 @@
         }
 
         return {
-          label: "Pessimo",
+          label: "Péssimo",
           chipClass: "c-bad",
           badgeClass: "status-low",
           dotClass: "dot-low",
@@ -5532,7 +6350,7 @@
       function getTimelineScopeMeta(scopeKey) {
         if (scopeKey === "__total__") {
           return {
-            label: "Operacao Total",
+            label: "Operação Total",
             targetTotal: Math.max(getTotalDemandLines(), 0),
             producedNow: Math.max(getTotalSeparatedLines(), 0)
           };
@@ -5541,7 +6359,7 @@
         const sector = state.sectors.find((item) => item.setor === scopeKey);
         if (!sector) {
           return {
-            label: "Operacao Total",
+            label: "Operação Total",
             targetTotal: Math.max(getTotalDemandLines(), 0),
             producedNow: Math.max(getTotalSeparatedLines(), 0)
           };
@@ -5682,7 +6500,7 @@
         if (deficitPct <= state.timelineStatusTolerancePct) {
           return {
             key: "warn",
-            label: "Atencao",
+            label: "Atenção",
             detail: `Abaixo da meta em ${fmtPct(deficitPct * 100)} (limite ${fmtPct(state.timelineStatusTolerancePct * 100)}).`,
             gap
           };
@@ -5702,7 +6520,7 @@
           list.push({
             start: state.config.lunchStartMin,
             end: state.config.lunchEndMin,
-            label: "Almoco"
+            label: "Almoço"
           });
         }
         return list;
@@ -5751,7 +6569,7 @@
         ui.timelineProjectedProgress.style.width = `${projectedExtraPct.toFixed(2)}%`;
 
         ui.timelinePastValue.textContent = `${fmtInt(separated)} linhas`;
-        ui.timelinePastSub.textContent = `${fmtPct(realPct)} concluido ate agora`;
+        ui.timelinePastSub.textContent = `${fmtPct(realPct)} concluído até agora`;
         ui.timelineNowValue.textContent = formatSimulatedClock(now);
         const rateModeLabel = state.timelineRateMode === "last-hour"
           ? "janela 60min"
@@ -5761,16 +6579,16 @@
         ui.timelineFutureSub.textContent = `${fmtPct(projectedPct)} projetado ate ${formatSimulatedClock(end)}`;
 
         if (remaining <= 0) {
-          ui.timelineEtaValue.textContent = "Concluido";
+          ui.timelineEtaValue.textContent = "Concluído";
           ui.timelineEtaSub.textContent = "Demanda totalmente finalizada";
         } else if (etaMinutes === null) {
-          ui.timelineEtaValue.textContent = "Sem previsao";
+          ui.timelineEtaValue.textContent = "Sem previsão";
           ui.timelineEtaSub.textContent = "Sem ritmo suficiente para projetar ETA";
         } else {
           ui.timelineEtaValue.textContent = formatSimulatedClock(etaMinutes);
           ui.timelineEtaSub.textContent = etaInsideWindow
-            ? "Conclusao dentro da janela selecionada"
-            : "Conclusao apos a janela selecionada";
+            ? "Conclusão dentro da janela selecionada"
+            : "Conclusão após a janela selecionada";
         }
 
         ui.timelineStartLabel.textContent = `Inicio: ${formatSimulatedClock(start)}`;
@@ -5937,7 +6755,7 @@
           applyTimelineKpiTone(ui.timelineKpiDeltaValue, ui.timelineKpiDeltaSub, "kpi-tone-off");
         } else if (!hasForecast && summary.requiredLines > 0) {
           ui.timelineKpiDeltaValue.textContent = "--";
-          ui.timelineKpiDeltaSub.textContent = "Sem previsao para calcular diferenca.";
+          ui.timelineKpiDeltaSub.textContent = "Sem previsão para calcular diferença.";
           applyTimelineKpiTone(ui.timelineKpiDeltaValue, ui.timelineKpiDeltaSub, "kpi-tone-warn");
         } else {
           const forecastBase = hasForecast ? summary.forecastEndTotal : summary.producedNow;
@@ -5949,7 +6767,7 @@
 
           ui.timelineKpiDeltaValue.textContent = `${deltaToFinish >= 0 ? "+" : "-"}${fmtInt(Math.abs(deltaToFinish))} linhas`;
           ui.timelineKpiDeltaSub.textContent = deltaToFinish >= 0
-            ? "Adiantado na previsao final."
+            ? "Adiantado na previsão final."
             : "Atraso previsto no fechamento.";
           applyTimelineKpiTone(ui.timelineKpiDeltaValue, ui.timelineKpiDeltaSub, gapTone);
         }
@@ -5964,7 +6782,7 @@
 
         ui.timelineKpiRatesValue.textContent = `${avgText} / ${reqText}`;
         if (!hasTarget) {
-          ui.timelineKpiRatesSub.textContent = "Sem meta para comparar ritmo necessario.";
+          ui.timelineKpiRatesSub.textContent = "Sem meta para comparar ritmo necessário.";
           applyTimelineKpiTone(ui.timelineKpiRatesValue, ui.timelineKpiRatesSub, "kpi-tone-off");
         } else if (summary.requiredLines <= 0) {
           ui.timelineKpiRatesSub.textContent = "Meta ja atingida.";
@@ -5976,12 +6794,12 @@
           ui.timelineKpiRatesSub.textContent = "Ritmo atual suficiente para fechar no prazo.";
           applyTimelineKpiTone(ui.timelineKpiRatesValue, ui.timelineKpiRatesSub, "kpi-tone-ok");
         } else {
-          ui.timelineKpiRatesSub.textContent = "Ritmo atual abaixo do necessario.";
+          ui.timelineKpiRatesSub.textContent = "Ritmo atual abaixo do necessário.";
           applyTimelineKpiTone(ui.timelineKpiRatesValue, ui.timelineKpiRatesSub, "kpi-tone-critical");
         }
 
         if (!hasForecast && summary.requiredLines > 0) {
-          ui.timelineKpiForecastValue.textContent = "Sem previsao";
+          ui.timelineKpiForecastValue.textContent = "Sem previsão";
           ui.timelineKpiForecastSub.textContent = "Ritmo insuficiente para estimar fechamento.";
           applyTimelineKpiTone(ui.timelineKpiForecastValue, ui.timelineKpiForecastSub, "kpi-tone-warn");
           return;
@@ -6034,21 +6852,21 @@
         }
 
         if (!summary.hasForecastNow) {
-          ui.timelineSummaryEta.textContent = "Sem previsao";
+          ui.timelineSummaryEta.textContent = "Sem previsão";
           ui.timelineSummaryEtaSub.textContent = "Ritmo insuficiente para estimar fechamento.";
           return;
         }
 
         if (summary.finishMinute === null) {
           ui.timelineSummaryEta.textContent = "Apos jornada";
-          ui.timelineSummaryEtaSub.textContent = `Projecao final: ${fmtInt(summary.forecastEndTotal)} / ${fmtInt(summary.targetTotal)} linhas`;
+          ui.timelineSummaryEtaSub.textContent = `Projeção final: ${fmtInt(summary.forecastEndTotal)} / ${fmtInt(summary.targetTotal)} linhas`;
           return;
         }
 
         ui.timelineSummaryEta.textContent = formatSimulatedClock(summary.finishMinute);
         ui.timelineSummaryEtaSub.textContent = summary.finishMinute <= summary.shiftEnd
-          ? "Previsao de fechamento dentro do turno."
-          : "Previsao de fechamento apos o turno.";
+          ? "Previsão de fechamento dentro do turno."
+          : "Previsão de fechamento após o turno.";
       }
 
       function renderTimelineHistory(shiftStart, nowMinute, shiftEnd, _separated, _projectedTotal, _total) {
@@ -6177,9 +6995,9 @@
           ? (Number.isFinite(avgLPHNow) ? avgLPHNow : requiredLPHNow)
           : scope.producedNow;
 
-        chart.data.datasets[0].label = isIntervalMode ? "LPH Medio" : "Producao Real";
-        chart.data.datasets[1].label = isIntervalMode ? "LPH Necessario" : "Meta Dinamica";
-        chart.data.datasets[2].label = isIntervalMode ? "LPH Previsto" : "Previsao";
+        chart.data.datasets[0].label = isIntervalMode ? "LPH Médio" : "Produção Real";
+        chart.data.datasets[1].label = isIntervalMode ? "LPH Necessário" : "Meta Dinâmica";
+        chart.data.datasets[2].label = isIntervalMode ? "LPH Previsto" : "Previsão";
         chart.data.datasets[0].fill = !isIntervalMode;
         chart.data.datasets[0].data = realData;
         chart.data.datasets[1].data = requiredData;
@@ -6396,7 +7214,7 @@
         const productiveRate = Number.isFinite(sector.lphProductiveEwma) && sector.lphProductiveEwma > 0
           ? `${fmtInt(sector.lphProductiveEwma)} l/h`
           : "--";
-        refs.linhasHoraDot.title = `${statusMeta.label} | LPH operacional ${fmtInt(statusMeta.effectiveRate)} l/h | LPH produtivo ${productiveRate} | Necessario ${rateNeeded}`;
+        refs.linhasHoraDot.title = `${statusMeta.label} | LPH operacional ${fmtInt(statusMeta.effectiveRate)} l/h | LPH produtivo ${productiveRate} | Necessário ${rateNeeded}`;
         setStatusDotClass(refs.linhasHoraDot, statusMeta.dotClass || "dot-meta");
       }
 
@@ -6426,7 +7244,7 @@
         const now = new Date();
         const time = now.toLocaleTimeString("pt-BR");
         ui.timestamp.textContent =
-          `Atualizado: ${time} | Simulacao local com dados ficticios.`;
+          `Atualizado: ${time} | Simulação local com dados fictícios.`;
       }
 
       function renderClock() {
@@ -6457,7 +7275,7 @@
         if (mode === "setores") {
           title = "Detalhes dos Setores";
           subtitle = "Visao geral de totais por setor.";
-          headers = ["Setor", "Descricao", "Linhas Totais", "Containers", "Itens", "Peso Previsto"];
+          headers = ["Setor", "Descrição", "Linhas Totais", "Containers", "Itens", "Peso Previsto"];
           rows = list.map((sector) => [
             sector.setor,
             sector.descricao,
@@ -6474,8 +7292,8 @@
           ];
         } else if (mode === "separadas") {
           title = "Linhas Separadas por Setor";
-          subtitle = "Producao ja separada na simulacao.";
-          headers = ["Setor", "Descricao", "Linhas Separadas", "Peso Separado", "Containers Sep.", "Itens Sep."];
+          subtitle = "Produção já separada na simulação.";
+          headers = ["Setor", "Descrição", "Linhas Separadas", "Peso Separado", "Containers Sep.", "Itens Sep."];
           rows = list.map((sector) => [
             sector.setor,
             sector.descricao,
@@ -6493,7 +7311,7 @@
         } else if (mode === "restantes") {
           title = "Linhas Restantes por Setor";
           subtitle = "Volume pendente e prioridade de ataque.";
-          headers = ["Setor", "Descricao", "Linhas Restantes", "Peso Restante", "Containers Rest.", "Itens Rest.", "Prioridade"];
+          headers = ["Setor", "Descrição", "Linhas Restantes", "Peso Restante", "Containers Rest.", "Itens Rest.", "Prioridade"];
           rows = list.map((sector) => [
             sector.setor,
             sector.descricao,
@@ -6513,7 +7331,7 @@
           const deliveryContext = buildDeliveryContext();
           title = "Progresso por Setor";
           subtitle = "Status calculado por chance de entregar ate o fim da jornada.";
-          headers = ["Setor", "Descricao", "Progresso", "Linhas/h", "Necessario", "Status"];
+          headers = ["Setor", "Descrição", "Progresso", "Linhas/h", "Necessário", "Status"];
           rows = list.map((sector) => {
             const status = classifyMeta(sector, deliveryContext);
             return [
@@ -6527,9 +7345,9 @@
           });
           summary = [
             ["Progresso Geral", fmtPct((sum(list, "linhasSeparadas") / Math.max(1, sum(list, "linhasTotais"))) * 100)],
-            ["Setores Concluidos", fmtInt(list.filter((sector) => sector.linhasRestantes <= 0).length)],
-            ["Media Linhas/h", `${fmtInt(list.reduce((acc, sector) => acc + getAverageLinesPerHour(sector), 0) / Math.max(1, list.length))} l/h`],
-            ["Media Ult. Hora", fmtInt(sum(list, "producaoHoraAnterior") / Math.max(1, list.length))],
+            ["Setores Concluídos", fmtInt(list.filter((sector) => sector.linhasRestantes <= 0).length)],
+            ["Média Linhas/h", `${fmtInt(list.reduce((acc, sector) => acc + getAverageLinesPerHour(sector), 0) / Math.max(1, list.length))} l/h`],
+            ["Média Últ. Hora", fmtInt(sum(list, "producaoHoraAnterior") / Math.max(1, list.length))],
             ["Horario Simulado", formatSimulatedClock(state.simulatedMinutes)]
           ];
         }
